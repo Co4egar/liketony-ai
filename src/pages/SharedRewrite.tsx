@@ -57,7 +57,7 @@ const SharedRewrite = () => {
 
   const previewHtml = view === "rewritten"
     ? injectBase(data.html_rewritten, data.source_url)
-    : data.html_original;
+    : injectBase(data.html_original, data.source_url);
 
   const handleDownload = () => {
     const blob = new Blob([data.html_rewritten], { type: "text/html" });
@@ -111,7 +111,7 @@ const SharedRewrite = () => {
         key={view}
         title="Shared rewrite"
         srcDoc={previewHtml}
-        sandbox="allow-same-origin"
+        sandbox="allow-same-origin allow-scripts allow-popups"
         className="flex-1 w-full bg-white"
       />
     </div>
@@ -119,10 +119,17 @@ const SharedRewrite = () => {
 };
 
 function injectBase(html: string, url: string): string {
-  const baseTag = `<base href="${url}">`;
+  const safeUrl = url.replaceAll('"', "&quot;");
+  const previewHead = `<base href="${safeUrl}"><style id="personaswap-static-preview-fix">
+html,body{min-width:0!important;}
+.t-records,.t-records_animated,.t-records.t-records_visible{opacity:1!important;}
+.t-animate,[data-animate-style],[data-animate-style-res-320],[data-animate-style-res-360],[data-animate-style-res-480],[data-animate-style-res-640],[data-animate-style-res-960]{opacity:1!important;transform:none!important;transition:none!important;}
+.t396__artboard,.t396__carrier,.t396__filter{overflow:visible!important;}
+img[data-original]{visibility:visible!important;opacity:1!important;}
+</style>`;
   return /<head[^>]*>/i.test(html)
     ? html.replace(/<head[^>]*>/i, (m) => `${m}${baseTag}`)
-    : `${baseTag}${html}`;
+    : `<head>${previewHead}</head>${html}`;
 }
 
 export default SharedRewrite;
