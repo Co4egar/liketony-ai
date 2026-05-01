@@ -22,7 +22,7 @@ const SharedRewrite = () => {
 
   useEffect(() => {
     if (!publicId) return;
-    document.title = "PersonaPress — Shared rewrite";
+    document.title = "LikeTony.ai — Shared rewrite";
     (async () => {
       const { data, error } = await supabase
         .from("rewrites")
@@ -34,7 +34,7 @@ const SharedRewrite = () => {
         return;
       }
       setData(data as Rewrite);
-      document.title = `${data.persona_name} rewrites ${data.source_url} — PersonaPress`;
+      document.title = `${data.persona_name} rewrites ${data.source_url} — LikeTony.ai`;
     })();
   }, [publicId]);
 
@@ -78,7 +78,7 @@ const SharedRewrite = () => {
       <header className="px-4 py-3 border-b border-border/60 bg-card/40 backdrop-blur flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <Link to="/" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
-            <ArrowLeft className="w-4 h-4" /> PersonaPress
+            <ArrowLeft className="w-4 h-4" /> LikeTony.ai
           </Link>
           <span className="text-sm text-muted-foreground truncate">
             <span className="text-foreground font-medium">{data.persona_name}</span> rewrites{" "}
