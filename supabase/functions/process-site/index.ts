@@ -157,7 +157,8 @@ Deno.serve(async (req) => {
     const url = normalizeUrl(body.url);
     const html = await scrape(url);
     const { template, segments } = extractSegments(html);
-    const rewrittenMap = await rewriteSegments(segments, body.persona);
+    const intensity = typeof body.intensity === "number" ? body.intensity : 50;
+    const rewrittenMap = await rewriteSegments(segments, body.persona, intensity);
     const safeRewrittenMap = constrainRewritesForLayout(segments, rewrittenMap);
     const finalHtml = applyRewrites(template, segments, safeRewrittenMap);
 
