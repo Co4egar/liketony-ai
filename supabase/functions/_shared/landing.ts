@@ -198,11 +198,13 @@ export function prepareStaticPreviewHtml(html: string, sourceUrl: string): strin
   );
 
   const previewHead = `<base href="${safeUrl}"><style id="personaswap-static-preview-fix">
-html,body{min-width:0!important;}
+html,body{min-width:0!important;max-width:100%!important;overflow-x:hidden!important;}
+body{word-spacing:normal!important;letter-spacing:normal!important;}
 .t-records,.t-records_animated,.t-records.t-records_visible{opacity:1!important;}
 .t-animate,[data-animate-style],[data-animate-style-res-320],[data-animate-style-res-360],[data-animate-style-res-480],[data-animate-style-res-640],[data-animate-style-res-960]{opacity:1!important;transform:none!important;transition:none!important;}
 .t396__artboard,.t396__carrier,.t396__filter{overflow:visible!important;}
 img[data-original]{visibility:visible!important;opacity:1!important;}
+p,h1,h2,h3,h4,h5,h6,span,a,li,div{word-break:normal;overflow-wrap:break-word;hyphens:none;white-space:normal;}
 </style>`;
 
   return /<head[^>]*>/i.test(out)
