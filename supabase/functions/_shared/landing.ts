@@ -297,6 +297,27 @@ p,h1,h2,h3,h4,h5,h6,span,a,li{word-break:normal;overflow-wrap:break-word;hyphens
     });
     return best;
   }
+  function findLowerBlocker(elem,atom){
+    var er=elem.getBoundingClientRect();
+    var ar=atom.getBoundingClientRect();
+    var root=elem.closest('.t396__artboard')||document;
+    var bestTop=null;
+    root.querySelectorAll('.t396__elem').forEach(function(node){
+      if(node===elem || node.getAttribute('data-elem-type')==='text') return;
+      var r=node.getBoundingClientRect();
+      if(r.width<120 || r.height<70) return;
+      if(r.top<=er.top+18 || r.top>=ar.bottom+8) return;
+      var horizontal=Math.max(0,Math.min(ar.right,r.right)-Math.max(ar.left,r.left));
+      if(horizontal<Math.min(ar.width,r.width)*0.12) return;
+      var atomNode=node.querySelector('.tn-atom');
+      var st=getComputedStyle(atomNode||node);
+      var painted=(st.backgroundImage&&st.backgroundImage!=='none')||!/rgba?\(0, 0, 0, 0\)|transparent/i.test(st.backgroundColor)||st.boxShadow!=='none'||parseFloat(st.borderWidth||'0')>0;
+      if(!painted) return;
+      if(bestTop===null || r.top<bestTop) bestTop=r.top;
+    });
+    if(bestTop===null) return null;
+    return Math.max(24,bestTop-er.top-14);
+  }
   function fitOne(atom){
     var elem=atom.closest('.t396__elem');
     if(!elem) return;
@@ -325,10 +346,12 @@ p,h1,h2,h3,h4,h5,h6,span,a,li{word-break:normal;overflow-wrap:break-word;hyphens
     }
     var elemRect=elem.getBoundingClientRect();
     var atomRect=atom.getBoundingClientRect();
+    var lowerLimit=!compactFit && fontSize>=32 ? findLowerBlocker(elem,atom) : null;
     var maxW=chrome?Math.max(24,chrome.width-18):(isButton?(atom.clientWidth||atomRect.width):(elem.clientWidth||elemRect.width));
     var maxH=chrome?Math.max(12,chrome.height-8):(isButton?(atom.clientHeight||atomRect.height):(elem.clientHeight||elemRect.height));
+    if(lowerLimit!==null) maxH=maxH>0?Math.min(maxH,lowerLimit):lowerLimit;
     if(!maxW) return;
-    var minSize=Math.max(compactFit?7:11, fontSize*(compactFit?0.30:0.55));
+    var minSize=Math.max(compactFit?7:10, fontSize*(compactFit?0.30:(lowerLimit!==null?0.34:0.55)));
     var guard=0;
     while(guard<42 && fontSize>minSize && (atom.scrollWidth>maxW+1 || (maxH>0 && atom.scrollHeight>maxH+1))){
       fontSize=fontSize*(compactFit?0.90:0.93);
