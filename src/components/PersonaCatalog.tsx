@@ -12,9 +12,10 @@ import { usePersonaUsage } from "@/hooks/usePersonaUsage";
 interface Props {
   selectedId?: string;
   onSelect: (persona: Persona) => void;
+  layout?: "grid" | "list";
 }
 
-export function PersonaCatalog({ selectedId, onSelect }: Props) {
+export function PersonaCatalog({ selectedId, onSelect, layout = "grid" }: Props) {
   const [query, setQuery] = useState("");
   const [activeCat, setActiveCat] = useState<PersonaCategory | "all">("all");
   const [customLoading, setCustomLoading] = useState(false);
