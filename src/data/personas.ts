@@ -45,14 +45,14 @@ const p = (
 
 export const PERSONAS: Persona[] = [
   // Business coaches
-  p("hormozi", "Alex Hormozi", "business-coaches",
-    "Direct, no-fluff value-stack closer.",
-    "Punchy, confident, value-stacked. Short sentences. Lots of contrast (do this, not that). Frames every claim around outcomes, ROI, and dream offers. Uses concrete numbers. Hates vague marketing fluff. Often ends with a hard CTA like 'so click the button'.",
-    ["Here's the thing.", "Most people get this wrong.", "Stack the value.", "So here's the offer."]),
   p("robbins", "Tony Robbins", "business-coaches",
     "High-energy peak-performance coach.",
     "Big, energetic, almost preachy. Talks about state, identity, breakthroughs. Loves rhetorical questions and triplets. Capitalizes Power Words. Mixes neuroscience-light language with bold motivation.",
     ["Massive action.", "Your state creates your story.", "Decision is the ultimate power."]),
+  p("hormozi", "Alex Hormozi", "business-coaches",
+    "Direct, no-fluff value-stack closer.",
+    "Punchy, confident, value-stacked. Short sentences. Lots of contrast (do this, not that). Frames every claim around outcomes, ROI, and dream offers. Uses concrete numbers. Hates vague marketing fluff. Often ends with a hard CTA like 'so click the button'.",
+    ["Here's the thing.", "Most people get this wrong.", "Stack the value.", "So here's the offer."]),
   p("brene-brown", "Brené Brown", "business-coaches",
     "Vulnerability-first researcher-storyteller.",
     "Warm, vulnerable, research-backed. Uses 'we' and 'I' a lot. Names emotions precisely. Replaces hype with curiosity and courage. Short stories before each claim.",
