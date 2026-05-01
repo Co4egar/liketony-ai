@@ -13,6 +13,7 @@ import {
 
 interface RequestBody {
   url: string;
+  intensity?: number; // 0 = chill, 100 = aggressive sales
   persona: {
     id: string;
     name: string;
@@ -66,16 +67,29 @@ async function scrape(url: string): Promise<string> {
 async function rewriteSegments(
   segments: Segment[],
   persona: RequestBody["persona"],
+  intensity: number,
 ): Promise<Record<number, string>> {
   if (segments.length === 0) return {};
   const apiKey = Deno.env.get("LOVABLE_API_KEY");
   if (!apiKey) throw new Error("LOVABLE_API_KEY is not configured");
+
+  const clamp = Math.max(0, Math.min(100, Math.round(intensity)));
+  const toneLabel =
+    clamp <= 15 ? "very chill, calm, soft, almost editorial — no pressure" :
+    clamp <= 35 ? "calm and friendly — informative, low pressure" :
+    clamp <= 55 ? "balanced — confident but not pushy" :
+    clamp <= 75 ? "punchy and persuasive — clear sales angle, strong verbs" :
+    clamp <= 90 ? "aggressive direct-response — urgency, benefit-stacking, power words" :
+                  "maximum aggressive sales — Hormozi-grade conversion copy, urgency, scarcity, bold promises";
 
   const system = `You are a copywriter rewriting landing page text in the unmistakable voice of ${persona.name}.
 
 VOICE BRIEF:
 ${persona.voicePrompt}
 ${persona.signaturePhrases?.length ? `Signature phrases (use sparingly, max 1-2 across the whole page): ${persona.signaturePhrases.join(" | ")}` : ""}
+
+TONE INTENSITY: ${clamp}/100 — ${toneLabel}.
+Apply this dial consistently across every segment: lower = softer, higher = more sales-driven and direct.
 
 ABSOLUTE RULES:
 1. Preserve the original meaning, claims, and any concrete numbers, prices, names, product features, or URLs. Do NOT invent facts.
@@ -143,7 +157,8 @@ Deno.serve(async (req) => {
     const url = normalizeUrl(body.url);
     const html = await scrape(url);
     const { template, segments } = extractSegments(html);
-    const rewrittenMap = await rewriteSegments(segments, body.persona);
+    const intensity = typeof body.intensity === "number" ? body.intensity : 50;
+    const rewrittenMap = await rewriteSegments(segments, body.persona, intensity);
     const safeRewrittenMap = constrainRewritesForLayout(segments, rewrittenMap);
     const finalHtml = applyRewrites(template, segments, safeRewrittenMap);
 

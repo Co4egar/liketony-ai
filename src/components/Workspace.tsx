@@ -38,9 +38,11 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
 ) {
   const [url, setUrl] = useState(initialUrl);
   const [persona, setPersona] = useState<Persona>(initialPersona);
-  const [pending, setPending] = useState<{ url: string; persona: Persona } | null>({
+  const [intensity, setIntensity] = useState(50);
+  const [pending, setPending] = useState<{ url: string; persona: Persona; intensity: number } | null>({
     url: initialUrl,
     persona: initialPersona,
+    intensity: 50,
   });
   const [stage, setStage] = useState(0);
   const [result, setResult] = useState<RewriteResult | null>(null);
@@ -69,6 +71,7 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
         const { data, error: invokeError } = await supabase.functions.invoke("process-site", {
           body: {
             url: pending.url,
+            intensity: pending.intensity,
             persona: {
               id: pending.persona.id,
               name: pending.persona.name,
@@ -96,13 +99,14 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
     return () => stageTimers.forEach(clearTimeout);
   }, [pending]);
 
-  const goAgain = (newUrl?: string, newPersona?: Persona) => {
+  const goAgain = (newUrl?: string, newPersona?: Persona, newIntensity?: number) => {
     const targetUrl = newUrl ?? url;
     const targetPersona = newPersona ?? persona;
+    const targetIntensity = newIntensity ?? intensity;
     setUrl(targetUrl);
     setPersona(targetPersona);
     setChangingPersona(false);
-    setPending({ url: targetUrl, persona: targetPersona });
+    setPending({ url: targetUrl, persona: targetPersona, intensity: targetIntensity });
   };
 
   const handleDownload = () => {
@@ -176,6 +180,30 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
               <div className="min-w-0">
                 <div className="font-display font-semibold truncate">{persona.name}</div>
                 <div className="text-xs text-muted-foreground line-clamp-2">{persona.shortBio}</div>
+              </div>
+            </div>
+            <div className="rounded-xl border border-border/60 bg-card/60 p-3 space-y-2">
+              <div className="flex items-center justify-between text-[11px] uppercase tracking-wider text-muted-foreground">
+                <span>Chill</span>
+                <span className="text-foreground font-medium normal-case tracking-normal">{intensity}%</span>
+                <span>Aggressive</span>
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                step={1}
+                value={intensity}
+                onChange={(e) => setIntensity(Number(e.target.value))}
+                onMouseUp={() => intensity !== pending?.intensity && goAgain(url, persona, intensity)}
+                onTouchEnd={() => intensity !== pending?.intensity && goAgain(url, persona, intensity)}
+                onKeyUp={(e) => { if (e.key === "Enter") goAgain(url, persona, intensity); }}
+                disabled={loading}
+                className="w-full accent-primary h-1.5 cursor-pointer disabled:opacity-50"
+                aria-label="Tone intensity from chill to aggressive"
+              />
+              <div className="text-[11px] text-muted-foreground">
+                Higher = more aggressive, sales-driven copy.
               </div>
             </div>
           </div>
