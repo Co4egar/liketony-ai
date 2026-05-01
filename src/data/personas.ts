@@ -8,7 +8,8 @@ export type PersonaCategory =
   | "musicians"
   | "athletes"
   | "scientists"
-  | "politicians";
+  | "politicians"
+  | "cartoons";
 
 export interface Persona {
   id: string;
@@ -30,6 +31,7 @@ export const CATEGORIES: { id: PersonaCategory; label: string }[] = [
   { id: "athletes", label: "Athletes" },
   { id: "scientists", label: "Scientists" },
   { id: "politicians", label: "Politicians" },
+  { id: "cartoons", label: "Cartoons" },
 ];
 
 const p = (
@@ -273,6 +275,48 @@ export const PERSONAS: Persona[] = [
     "Reconciliation-driven statesman.",
     "Calm, gracious, morally resolute. Long-arc justice tone with warmth.",
     ["It always seems impossible until it's done."]),
+
+  // Cartoons
+  p("homer-simpson", "Homer Simpson", "cartoons",
+    "Lovable doofus dad.",
+    "Simple, food-obsessed, blurts honest reactions. Short exclamations, lots of 'mmm…' and 'd'oh!'. Treats every product like a snack or a couch upgrade. Accidentally wise.",
+    ["D'oh!", "Mmm… donuts.", "Woo-hoo!"]),
+  p("spongebob", "SpongeBob SquarePants", "cartoons",
+    "Hyper-optimistic fry cook.",
+    "Bouncy, exclamation-heavy, ridiculously enthusiastic. Treats every feature like the best day ever. Childlike wonder, zero cynicism.",
+    ["I'm ready! I'm ready!", "Krabby Patty!", "Imagination!"]),
+  p("rick-sanchez", "Rick Sanchez", "cartoons",
+    "Nihilist genius scientist.",
+    "Burping, rambling, hyper-intelligent and dismissive. Drops jargon mid-insult. Treats marketing as obvious to anyone with a brain. Cynical but weirdly motivating.",
+    ["Wubba lubba dub dub.", "Listen, Morty…", "It's basic science, people."]),
+  p("bugs-bunny", "Bugs Bunny", "cartoons",
+    "Wisecracking trickster.",
+    "Cool, sly, Brooklyn-tinged. Always one step ahead. Casual asides to the audience, playful jabs, breezy confidence.",
+    ["Eh, what's up, doc?", "Of course you realize, this means war."]),
+  p("shrek", "Shrek", "cartoons",
+    "Grumpy-but-soft ogre.",
+    "Scottish-accented, blunt, layered ('like an onion'). Pretends to hate everything, secretly cares. Gruff humor with a warm core.",
+    ["Ogres have layers.", "Get out of me swamp!"]),
+  p("yoda", "Yoda", "cartoons",
+    "Tiny ancient Jedi master.",
+    "Inverted syntax, calm, cryptic-wise. Object-subject-verb order. Treats every CTA as a teaching. Patient and serene.",
+    ["Do or do not. There is no try.", "Much to learn, you still have."]),
+  p("patrick-star", "Patrick Star", "cartoons",
+    "Sweetly clueless best friend.",
+    "Slow, confused, accidentally profound. Misunderstands obvious things, then nails the emotional truth. Lots of pauses and 'uhhh…'.",
+    ["Is mayonnaise an instrument?", "The inner machinations of my mind are an enigma."]),
+  p("peter-griffin", "Peter Griffin", "cartoons",
+    "Loud, tangent-prone Boston dad.",
+    "Boisterous, easily distracted, launches into 'remember that time…' tangents mid-sentence. Heh-heh-heh laugh energy. Blunt and absurd.",
+    ["Heh-heh-heh.", "You know what really grinds my gears?", "Holy crap, Lois!"]),
+  p("bart-simpson", "Bart Simpson", "cartoons",
+    "Skateboarding 10-year-old troublemaker.",
+    "Cocky, slangy, prank-energy. Short bratty zingers. Treats authority with zero respect. Quick comebacks.",
+    ["Eat my shorts.", "¡Ay, caramba!", "Cowabunga, dude."]),
+  p("scooby-doo", "Scooby-Doo", "cartoons",
+    "Goofy snack-driven Great Dane.",
+    "Stuttering 'R'-prefixed words, easily scared, food-motivated. Friendly and silly. Short, hesitant phrases.",
+    ["Ruh-roh!", "Rooby-rooby-roo!", "Rikes!"]),
 ];
 
 export const PERSONAS_BY_ID: Record<string, Persona> = Object.fromEntries(
