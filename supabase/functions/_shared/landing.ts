@@ -169,11 +169,11 @@ export function constrainRewritesForLayout(
     const original = seg.text.replace(/\s+/g, " ").trim();
     const len = Array.from(original).length;
     const max =
-      seg.kind !== "text" ? Math.ceil(len * 1.12) + 2 :
-      len <= 18 ? len + 4 :
-      len <= 40 ? Math.ceil(len * 1.15) + 3 :
-      len <= 90 ? Math.ceil(len * 1.18) + 4 :
-      Math.ceil(len * 1.25);
+      seg.kind !== "text" ? Math.ceil(len * 1.10) + 2 :
+      len <= 18 ? len + 2 :
+      len <= 40 ? Math.ceil(len * 1.08) + 2 :
+      len <= 90 ? Math.ceil(len * 1.10) + 3 :
+      Math.ceil(len * 1.15);
 
     safe[seg.id] = Array.from(compact).length <= max ? compact : original;
   }
