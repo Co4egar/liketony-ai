@@ -154,7 +154,7 @@ export function applyRewrites(
     const replacement = rewritten[seg.id] ?? seg.text;
     // Escape for HTML attribute contexts vs text contexts.
     const safe =
-      seg.kind === "text"
+      seg.kind === "text" || seg.kind === "button"
         ? replacement
             .replaceAll("&", "&amp;")
             .replaceAll("<", "&lt;")
