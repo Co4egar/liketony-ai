@@ -1,5 +1,6 @@
-import { forwardRef } from "react";
+import { forwardRef, useEffect, useState } from "react";
 import { Persona } from "@/data/personas";
+import { fetchPersonaPhoto } from "@/lib/persona-photos";
 
 const COLORS = [
   "from-violet-500 to-fuchsia-500",
@@ -37,14 +38,45 @@ export const PersonaAvatar = forwardRef<HTMLDivElement, Props>(
     const gradient = COLORS[hashIdx(persona.id, COLORS.length)];
     const sizeCls =
       size === "sm" ? "w-8 h-8 text-xs" : size === "lg" ? "w-14 h-14 text-lg" : "w-10 h-10 text-sm";
+
+    const [photo, setPhoto] = useState<string | null>(null);
+    const [loaded, setLoaded] = useState(false);
+
+    useEffect(() => {
+      let cancelled = false;
+      setPhoto(null);
+      setLoaded(false);
+      fetchPersonaPhoto(persona.id, persona.name).then((url) => {
+        if (cancelled) return;
+        setPhoto(url);
+      });
+      return () => {
+        cancelled = true;
+      };
+    }, [persona.id, persona.name]);
+
     return (
       <div
         ref={ref}
         {...rest}
-        className={`shrink-0 rounded-full bg-gradient-to-br ${gradient} ${sizeCls} flex items-center justify-center font-display font-semibold text-white shadow-lg ${className}`}
+        className={`relative shrink-0 rounded-full overflow-hidden bg-gradient-to-br ${gradient} ${sizeCls} flex items-center justify-center font-display font-semibold text-white shadow-lg ${className}`}
         aria-hidden
       >
-        {initials(persona.name)}
+        <span className={photo && loaded ? "opacity-0" : "opacity-100"}>
+          {initials(persona.name)}
+        </span>
+        {photo && (
+          <img
+            src={photo}
+            alt=""
+            loading="lazy"
+            onLoad={() => setLoaded(true)}
+            onError={() => setPhoto(null)}
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-200 ${
+              loaded ? "opacity-100" : "opacity-0"
+            }`}
+          />
+        )}
       </div>
     );
   },
