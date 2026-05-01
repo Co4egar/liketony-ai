@@ -99,13 +99,14 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
     return () => stageTimers.forEach(clearTimeout);
   }, [pending]);
 
-  const goAgain = (newUrl?: string, newPersona?: Persona) => {
+  const goAgain = (newUrl?: string, newPersona?: Persona, newIntensity?: number) => {
     const targetUrl = newUrl ?? url;
     const targetPersona = newPersona ?? persona;
+    const targetIntensity = newIntensity ?? intensity;
     setUrl(targetUrl);
     setPersona(targetPersona);
     setChangingPersona(false);
-    setPending({ url: targetUrl, persona: targetPersona });
+    setPending({ url: targetUrl, persona: targetPersona, intensity: targetIntensity });
   };
 
   const handleDownload = () => {
