@@ -9,7 +9,7 @@ export const corsHeaders = {
 
 export interface Segment {
   id: number;
-  kind: "text" | "title" | "meta-description" | "alt" | "aria-label";
+  kind: "text" | "button" | "title" | "meta-description" | "alt" | "aria-label";
   text: string;
 }
 
@@ -22,6 +22,17 @@ const placeholder = (id: number) => `${PLACEHOLDER_PREFIX}${id}${PLACEHOLDER_SUF
 const SKIP_TAGS = new Set([
   "script", "style", "noscript", "code", "pre", "svg", "canvas",
 ]);
+
+const VOID_TAGS = new Set([
+  "area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr",
+]);
+
+function isButtonishOpenTag(tagHtml: string, tag: string): boolean {
+  if (tag === "button") return true;
+  return /\bdata-elem-type\s*=\s*(["'])button\1/i.test(tagHtml) ||
+    /\brole\s*=\s*(["'])button\1/i.test(tagHtml) ||
+    /\bclass\s*=\s*(["'])[^"']*(?:\bt-btn\b|\bbtn\b|button|t-submit)[^"']*\1/i.test(tagHtml);
+}
 
 const MIN_LEN = 2;
 const MAX_SEGMENTS = 250;
@@ -92,16 +103,23 @@ export function extractSegments(html: string): {
   // 4) Visible text nodes — naive but effective: split on tags, walk through.
   const parts = template.split(/(<[^>]+>)/);
   let skipTag: string | null = null;
+  const openStack: Array<{ tag: string; isButton: boolean }> = [];
   for (let i = 0; i < parts.length; i++) {
     const part = parts[i];
     if (part.startsWith("<")) {
       const tagMatch = part.match(/^<\/?\s*([a-zA-Z0-9]+)/);
       if (tagMatch) {
         const tag = tagMatch[1].toLowerCase();
+        const isClosing = /^<\//.test(part);
         if (skipTag) {
-          if (tag === skipTag && part.startsWith("</")) skipTag = null;
-        } else if (SKIP_TAGS.has(tag) && !part.startsWith("</") && !part.endsWith("/>")) {
+          if (tag === skipTag && isClosing) skipTag = null;
+        } else if (isClosing) {
+          const idx = openStack.map((entry) => entry.tag).lastIndexOf(tag);
+          if (idx >= 0) openStack.splice(idx);
+        } else if (SKIP_TAGS.has(tag) && !part.endsWith("/>")) {
           skipTag = tag;
+        } else if (!VOID_TAGS.has(tag) && !part.endsWith("/>")) {
+          openStack.push({ tag, isButton: isButtonishOpenTag(part, tag) });
         }
       }
       continue;
@@ -114,7 +132,8 @@ export function extractSegments(html: string): {
     if (!/[a-zA-Zа-яА-Я]/.test(trimmed)) continue;
     if (segments.length >= MAX_SEGMENTS) continue;
     const id = nextId++;
-    segments.push({ id, kind: "text", text: trimmed });
+    const kind: Segment["kind"] = openStack.some((entry) => entry.isButton) ? "button" : "text";
+    segments.push({ id, kind, text: trimmed });
     // Preserve surrounding whitespace.
     const leading = raw.match(/^\s*/)?.[0] ?? "";
     const trailing = raw.match(/\s*$/)?.[0] ?? "";
