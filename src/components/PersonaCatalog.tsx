@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Search, Sparkles, Loader2 } from "lucide-react";
+import { Search, Sparkles, Loader2, TrendingUp } from "lucide-react";
 import { CATEGORIES, PERSONAS, Persona, PersonaCategory } from "@/data/personas";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { PersonaAvatar } from "./PersonaAvatar";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { usePersonaUsage } from "@/hooks/usePersonaUsage";
 
 interface Props {
   selectedId?: string;
@@ -18,6 +19,7 @@ export function PersonaCatalog({ selectedId, onSelect }: Props) {
   const [activeCat, setActiveCat] = useState<PersonaCategory | "all">("all");
   const [customLoading, setCustomLoading] = useState(false);
   const [customName, setCustomName] = useState("");
+  const usage = usePersonaUsage();
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -96,24 +98,36 @@ export function PersonaCatalog({ selectedId, onSelect }: Props) {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        {filtered.map((p) => (
-          <button
-            key={p.id}
-            onClick={() => onSelect(p)}
-            className={cn(
-              "group text-left rounded-xl border px-3 py-2.5 transition-all bg-card/40 hover:bg-card/80 flex items-center gap-3",
-              selectedId === p.id
-                ? "border-primary/70 bg-card ring-1 ring-primary/40"
-                : "border-border/60",
-            )}
-          >
-            <PersonaAvatar persona={p} />
-            <div className="min-w-0 flex-1">
-              <div className="font-display font-semibold text-foreground text-sm truncate">{p.name}</div>
-              <div className="text-xs text-muted-foreground truncate mt-0.5">{p.shortBio}</div>
-            </div>
-          </button>
-        ))}
+        {filtered.map((p) => {
+          const count = usage[p.id] ?? 0;
+          return (
+            <button
+              key={p.id}
+              onClick={() => onSelect(p)}
+              className={cn(
+                "group text-left rounded-xl border px-3 py-2.5 transition-all bg-card/40 hover:bg-card/80 flex items-center gap-3",
+                selectedId === p.id
+                  ? "border-primary/70 bg-card ring-1 ring-primary/40"
+                  : "border-border/60",
+              )}
+            >
+              <PersonaAvatar persona={p} />
+              <div className="min-w-0 flex-1">
+                <div className="font-display font-semibold text-foreground text-sm truncate">{p.name}</div>
+                <div className="text-xs text-muted-foreground truncate mt-0.5">{p.shortBio}</div>
+              </div>
+              {count > 0 && (
+                <span
+                  className="shrink-0 inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/60 px-2 py-0.5 text-[10px] font-medium text-muted-foreground tabular-nums"
+                  title={`Used ${count.toLocaleString()} times`}
+                >
+                  <TrendingUp className="w-3 h-3" />
+                  {count.toLocaleString()}
+                </span>
+              )}
+            </button>
+          );
+        })}
         {filtered.length === 0 && (
           <div className="text-center text-muted-foreground py-10 text-sm">
             No personas match. Try a different search or add a custom one above.
