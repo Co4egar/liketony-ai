@@ -1,61 +1,63 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* PersonaPress design system — dark Midnight Indigo, editorial typography. */
+/* LikeTony.ai — Claude-inspired warm dark editorial design system. */
 
 @layer base {
   :root {
-    /* Midnight Indigo palette */
-    --background: 235 40% 6%;
-    --foreground: 230 30% 96%;
+    /* Warm charcoal background, ivory foreground, coral accent (Claude signature). */
+    --background: 28 14% 9%;          /* #1A1714  warm near-black */
+    --foreground: 36 30% 94%;         /* #F4EFE6  warm ivory */
 
-    --card: 235 38% 9%;
-    --card-foreground: 230 30% 96%;
+    --card: 28 14% 12%;               /* #211D19 */
+    --card-foreground: 36 30% 94%;
 
-    --popover: 235 38% 9%;
-    --popover-foreground: 230 30% 96%;
+    --popover: 28 14% 12%;
+    --popover-foreground: 36 30% 94%;
 
-    --primary: 244 72% 65%;
-    --primary-foreground: 230 30% 98%;
-    --primary-glow: 252 90% 75%;
+    /* Coral / clay — Claude's "Crail" accent */
+    --primary: 14 60% 60%;            /* #D97757 */
+    --primary-foreground: 28 14% 9%;
+    --primary-glow: 22 75% 68%;       /* warmer terracotta glow */
 
-    --secondary: 235 30% 14%;
-    --secondary-foreground: 230 25% 92%;
+    --secondary: 28 12% 16%;
+    --secondary-foreground: 36 25% 90%;
 
-    --muted: 235 28% 13%;
-    --muted-foreground: 230 14% 64%;
+    --muted: 28 12% 14%;
+    --muted-foreground: 33 14% 64%;
 
-    --accent: 252 80% 70%;
-    --accent-foreground: 235 50% 8%;
+    --accent: 28 12% 18%;
+    --accent-foreground: 36 30% 94%;
 
-    --destructive: 0 72% 55%;
-    --destructive-foreground: 230 30% 98%;
+    --destructive: 0 65% 55%;
+    --destructive-foreground: 36 30% 96%;
 
-    --border: 235 28% 18%;
-    --input: 235 28% 16%;
-    --ring: 244 72% 65%;
+    --border: 30 12% 20%;
+    --input: 30 12% 17%;
+    --ring: 14 60% 60%;
 
-    --radius: 0.875rem;
+    --radius: 0.5rem;
 
-    --gradient-hero: radial-gradient(ellipse at top, hsl(244 72% 22% / 0.6), transparent 60%),
-                     radial-gradient(ellipse at bottom right, hsl(252 80% 30% / 0.4), transparent 55%);
-    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
-    --shadow-glow: 0 30px 80px -20px hsl(244 72% 50% / 0.45);
-    --shadow-card: 0 12px 40px -16px hsl(0 0% 0% / 0.6);
+    /* Editorial gradients & shadows */
+    --gradient-warm: radial-gradient(ellipse 80% 60% at 50% 0%, hsl(14 55% 22% / 0.55), transparent 60%),
+                     radial-gradient(ellipse 60% 50% at 90% 100%, hsl(22 60% 18% / 0.45), transparent 55%);
+    --gradient-coral: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+    --shadow-warm: 0 30px 80px -28px hsl(14 55% 30% / 0.55);
+    --shadow-card: 0 10px 36px -18px hsl(0 0% 0% / 0.7);
 
     --transition-smooth: cubic-bezier(0.22, 1, 0.36, 1);
 
-    --sidebar-background: 235 38% 8%;
-    --sidebar-foreground: 230 25% 90%;
-    --sidebar-primary: 244 72% 65%;
-    --sidebar-primary-foreground: 230 30% 98%;
-    --sidebar-accent: 235 30% 14%;
-    --sidebar-accent-foreground: 230 25% 92%;
-    --sidebar-border: 235 28% 18%;
-    --sidebar-ring: 244 72% 65%;
+    --sidebar-background: 28 14% 11%;
+    --sidebar-foreground: 36 25% 90%;
+    --sidebar-primary: 14 60% 60%;
+    --sidebar-primary-foreground: 28 14% 9%;
+    --sidebar-accent: 28 12% 16%;
+    --sidebar-accent-foreground: 36 25% 90%;
+    --sidebar-border: 30 12% 20%;
+    --sidebar-ring: 14 60% 60%;
   }
 }
 
@@ -70,33 +72,54 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'DM Sans', system-ui, sans-serif;
+    font-family: 'Inter', system-ui, sans-serif;
     font-feature-settings: "ss01", "cv11";
-    background-image: var(--gradient-hero);
+    background-image: var(--gradient-warm);
     background-attachment: fixed;
     background-color: hsl(var(--background));
   }
 
   h1, h2, h3, h4 {
-    font-family: 'Space Grotesk', system-ui, sans-serif;
+    font-family: 'Fraunces', 'Times New Roman', serif;
     letter-spacing: -0.02em;
+    font-feature-settings: "ss01";
   }
 }
 
 @layer utilities {
   .font-display {
-    font-family: 'Space Grotesk', system-ui, sans-serif;
+    font-family: 'Fraunces', 'Times New Roman', serif;
+    font-feature-settings: "ss01";
   }
 
-  .text-gradient {
-    background: var(--gradient-primary);
+  .font-mono {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+  }
+
+  .text-coral {
+    color: hsl(var(--primary));
+  }
+
+  .text-gradient-coral {
+    background: var(--gradient-coral);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
   }
 
-  .glow {
-    box-shadow: var(--shadow-glow);
+  .glow-warm {
+    box-shadow: var(--shadow-warm);
+  }
+
+  /* Subtle paper grain to mimic Claude's editorial feel. */
+  .grain::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.035;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
   }
 
   .scrollbar-thin {
@@ -107,5 +130,9 @@
   .scrollbar-thin::-webkit-scrollbar-thumb {
     background: hsl(var(--border));
     border-radius: 999px;
+  }
+
+  .marquee-fade {
+    mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
   }
 }
