@@ -182,6 +182,30 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
                 <div className="text-xs text-muted-foreground line-clamp-2">{persona.shortBio}</div>
               </div>
             </div>
+            <div className="rounded-xl border border-border/60 bg-card/60 p-3 space-y-2">
+              <div className="flex items-center justify-between text-[11px] uppercase tracking-wider text-muted-foreground">
+                <span>Chill</span>
+                <span className="text-foreground font-medium normal-case tracking-normal">{intensity}%</span>
+                <span>Aggressive</span>
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                step={1}
+                value={intensity}
+                onChange={(e) => setIntensity(Number(e.target.value))}
+                onMouseUp={() => intensity !== pending?.intensity && goAgain(url, persona, intensity)}
+                onTouchEnd={() => intensity !== pending?.intensity && goAgain(url, persona, intensity)}
+                onKeyUp={(e) => { if (e.key === "Enter") goAgain(url, persona, intensity); }}
+                disabled={loading}
+                className="w-full accent-primary h-1.5 cursor-pointer disabled:opacity-50"
+                aria-label="Tone intensity from chill to aggressive"
+              />
+              <div className="text-[11px] text-muted-foreground">
+                Higher = more aggressive, sales-driven copy.
+              </div>
+            </div>
           </div>
 
           {changingPersona && (
