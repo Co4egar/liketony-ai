@@ -71,6 +71,7 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
         const { data, error: invokeError } = await supabase.functions.invoke("process-site", {
           body: {
             url: pending.url,
+            intensity: pending.intensity,
             persona: {
               id: pending.persona.id,
               name: pending.persona.name,
