@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Sparkles } from "lucide-react";
+import { Mic } from "lucide-react";
 import { DomainBar } from "@/components/DomainBar";
 import { PersonaCatalog } from "@/components/PersonaCatalog";
 import { Workspace } from "@/components/Workspace";
@@ -41,7 +41,7 @@ const Index = () => {
       <header className="px-6 sm:px-10 py-5 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-[hsl(var(--primary-glow))] flex items-center justify-center shadow-glow">
-            <Sparkles className="w-4 h-4 text-primary-foreground" />
+            <Mic className="w-4 h-4 text-primary-foreground" />
           </div>
           <span className="font-display font-bold text-lg">LikeTony.ai</span>
         </div>
