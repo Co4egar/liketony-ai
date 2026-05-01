@@ -2,6 +2,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import {
   applyRewrites,
+  constrainRewritesForLayout,
   corsHeaders,
   extractSegments,
   generatePublicId,
@@ -78,7 +79,7 @@ ${persona.signaturePhrases?.length ? `Signature phrases (use sparingly, max 1-2 
 
 ABSOLUTE RULES:
 1. Preserve the original meaning, claims, and any concrete numbers, prices, names, product features, or URLs. Do NOT invent facts.
-2. Keep each rewritten segment within ±25% of the original character length.
+2. Keep each rewritten segment within the original layout space. Headlines, cards, buttons, and menu items must stay almost the same length as the original (never more than +10–15%). Longer paragraphs may be up to +20%.
 3. Match the original language. If the source is in Russian, respond in Russian. If English, English. Etc.
 4. Never include HTML tags. Never include the placeholder tokens.
 5. Short navigation labels, button text, and single words should stay short and snappy.
@@ -143,7 +144,8 @@ Deno.serve(async (req) => {
     const html = await scrape(url);
     const { template, segments } = extractSegments(html);
     const rewrittenMap = await rewriteSegments(segments, body.persona);
-    const finalHtml = applyRewrites(template, segments, rewrittenMap);
+    const safeRewrittenMap = constrainRewritesForLayout(segments, rewrittenMap);
+    const finalHtml = applyRewrites(template, segments, safeRewrittenMap);
 
     // Convert JS-dependent scraped pages into visible static previews.
     const previewHtml = prepareStaticPreviewHtml(finalHtml, url);
@@ -172,7 +174,7 @@ Deno.serve(async (req) => {
       htmlOriginal: html,
       htmlOriginalPreview: originalPreview,
       segmentCount: segments.length,
-      rewrittenCount: Object.keys(rewrittenMap).length,
+      rewrittenCount: Object.keys(safeRewrittenMap).length,
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
