@@ -9,7 +9,7 @@ export const corsHeaders = {
 
 export interface Segment {
   id: number;
-  kind: "text" | "title" | "meta-description" | "alt" | "aria-label";
+  kind: "text" | "button" | "title" | "meta-description" | "alt" | "aria-label";
   text: string;
 }
 
@@ -22,6 +22,17 @@ const placeholder = (id: number) => `${PLACEHOLDER_PREFIX}${id}${PLACEHOLDER_SUF
 const SKIP_TAGS = new Set([
   "script", "style", "noscript", "code", "pre", "svg", "canvas",
 ]);
+
+const VOID_TAGS = new Set([
+  "area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr",
+]);
+
+function isButtonishOpenTag(tagHtml: string, tag: string): boolean {
+  if (tag === "button") return true;
+  return /\bdata-elem-type\s*=\s*(["'])button\1/i.test(tagHtml) ||
+    /\brole\s*=\s*(["'])button\1/i.test(tagHtml) ||
+    /\bclass\s*=\s*(["'])[^"']*(?:\bt-btn\b|\bbtn\b|button|t-submit)[^"']*\1/i.test(tagHtml);
+}
 
 const MIN_LEN = 2;
 const MAX_SEGMENTS = 250;
@@ -92,16 +103,23 @@ export function extractSegments(html: string): {
   // 4) Visible text nodes — naive but effective: split on tags, walk through.
   const parts = template.split(/(<[^>]+>)/);
   let skipTag: string | null = null;
+  const openStack: Array<{ tag: string; isButton: boolean }> = [];
   for (let i = 0; i < parts.length; i++) {
     const part = parts[i];
     if (part.startsWith("<")) {
       const tagMatch = part.match(/^<\/?\s*([a-zA-Z0-9]+)/);
       if (tagMatch) {
         const tag = tagMatch[1].toLowerCase();
+        const isClosing = /^<\//.test(part);
         if (skipTag) {
-          if (tag === skipTag && part.startsWith("</")) skipTag = null;
-        } else if (SKIP_TAGS.has(tag) && !part.startsWith("</") && !part.endsWith("/>")) {
+          if (tag === skipTag && isClosing) skipTag = null;
+        } else if (isClosing) {
+          const idx = openStack.map((entry) => entry.tag).lastIndexOf(tag);
+          if (idx >= 0) openStack.splice(idx);
+        } else if (SKIP_TAGS.has(tag) && !part.endsWith("/>")) {
           skipTag = tag;
+        } else if (!VOID_TAGS.has(tag) && !part.endsWith("/>")) {
+          openStack.push({ tag, isButton: isButtonishOpenTag(part, tag) });
         }
       }
       continue;
@@ -114,7 +132,8 @@ export function extractSegments(html: string): {
     if (!/[a-zA-Zа-яА-Я]/.test(trimmed)) continue;
     if (segments.length >= MAX_SEGMENTS) continue;
     const id = nextId++;
-    segments.push({ id, kind: "text", text: trimmed });
+    const kind: Segment["kind"] = openStack.some((entry) => entry.isButton) ? "button" : "text";
+    segments.push({ id, kind, text: trimmed });
     // Preserve surrounding whitespace.
     const leading = raw.match(/^\s*/)?.[0] ?? "";
     const trailing = raw.match(/\s*$/)?.[0] ?? "";
@@ -135,7 +154,7 @@ export function applyRewrites(
     const replacement = rewritten[seg.id] ?? seg.text;
     // Escape for HTML attribute contexts vs text contexts.
     const safe =
-      seg.kind === "text"
+      seg.kind === "text" || seg.kind === "button"
         ? replacement
             .replaceAll("&", "&amp;")
             .replaceAll("<", "&lt;")
@@ -169,6 +188,7 @@ export function constrainRewritesForLayout(
     const original = seg.text.replace(/\s+/g, " ").trim();
     const len = Array.from(original).length;
     const max =
+      seg.kind === "button" ? Math.min(len + 2, Math.ceil(len * 1.04) + 1) :
       seg.kind !== "text" ? Math.ceil(len * 1.10) + 2 :
       len <= 18 ? len + 2 :
       len <= 40 ? Math.ceil(len * 1.08) + 2 :
@@ -237,30 +257,45 @@ img[data-original]{visibility:visible!important;opacity:1!important;}
 p,h1,h2,h3,h4,h5,h6,span,a,li{word-break:normal;overflow-wrap:break-word;hyphens:none;}
 .t396__elem[data-elem-type="text"],.t396__elem[data-elem-type="button"]{box-sizing:border-box!important;}
 .t396__elem[data-elem-type="text"] .tn-atom,.t396__elem[data-elem-type="button"] .tn-atom{box-sizing:border-box!important;word-spacing:normal!important;letter-spacing:0!important;word-break:normal!important;hyphens:none!important;}
+.t396__elem[data-elem-type="button"] .tn-atom{display:flex!important;align-items:center!important;justify-content:center!important;text-align:center!important;width:100%!important;max-width:100%!important;min-width:0!important;height:100%!important;overflow:hidden!important;white-space:nowrap!important;line-height:1.1!important;}
 </style><script id="personaswap-text-fit">
 (function(){
   function fitOne(atom){
     var elem=atom.closest('.t396__elem');
     if(!elem) return;
     var css=getComputedStyle(atom);
+    var isButton=elem.getAttribute('data-elem-type')==='button';
     var fontSize=parseFloat(css.fontSize)||16;
     atom.style.wordSpacing='normal';
     atom.style.letterSpacing='0px';
     atom.style.wordBreak='normal';
     atom.style.hyphens='none';
-    atom.style.overflowWrap='break-word';
-    // Respect Tilda's width — never force nowrap (it caused overflow into adjacent blocks).
-    if(css.whiteSpace==='nowrap') atom.style.whiteSpace='normal';
-    var maxW=elem.clientWidth||elem.getBoundingClientRect().width;
-    var maxH=elem.clientHeight||elem.getBoundingClientRect().height;
+    atom.style.overflowWrap=isButton?'normal':'break-word';
+    atom.style.whiteSpace=isButton?'nowrap':'normal';
+    if(isButton){
+      atom.style.display='flex';
+      atom.style.alignItems='center';
+      atom.style.justifyContent='center';
+      atom.style.textAlign='center';
+      atom.style.overflow='hidden';
+      atom.style.maxWidth='100%';
+      atom.style.width='100%';
+      atom.style.height='100%';
+      atom.style.minWidth='0';
+      atom.style.lineHeight='1.1';
+    }
+    var elemRect=elem.getBoundingClientRect();
+    var atomRect=atom.getBoundingClientRect();
+    var maxW=(isButton?(atom.clientWidth||atomRect.width):(elem.clientWidth||elemRect.width));
+    var maxH=(isButton?(atom.clientHeight||atomRect.height):(elem.clientHeight||elemRect.height));
     if(!maxW) return;
-    var minSize=Math.max(11, fontSize*0.55);
+    var minSize=Math.max(isButton?8:11, fontSize*(isButton?0.38:0.55));
     var guard=0;
-    while(guard<24 && fontSize>minSize && (atom.scrollWidth>maxW+1 || (maxH>0 && atom.scrollHeight>maxH+1))){
-      fontSize=fontSize*0.93;
+    while(guard<42 && fontSize>minSize && (atom.scrollWidth>maxW+1 || (maxH>0 && atom.scrollHeight>maxH+1))){
+      fontSize=fontSize*(isButton?0.90:0.93);
       atom.style.fontSize=fontSize+'px';
       var lh=parseFloat(getComputedStyle(atom).lineHeight);
-      if(!isNaN(lh) && lh>fontSize*1.6) atom.style.lineHeight=(fontSize*1.2)+'px';
+      if(isButton || (!isNaN(lh) && lh>fontSize*1.6)) atom.style.lineHeight=(fontSize*(isButton?1.1:1.2))+'px';
       guard++;
     }
   }
