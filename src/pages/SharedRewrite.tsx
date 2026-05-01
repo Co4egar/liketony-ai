@@ -119,7 +119,7 @@ const SharedRewrite = () => {
 };
 
 function injectBase(html: string, url: string): string {
-  const safeUrl = url.replaceAll('"', "&quot;");
+  const safeUrl = url.replace(/"/g, "&quot;");
   const previewHead = `<base href="${safeUrl}"><style id="personaswap-static-preview-fix">
 html,body{min-width:0!important;}
 .t-records,.t-records_animated,.t-records.t-records_visible{opacity:1!important;}
@@ -128,7 +128,7 @@ html,body{min-width:0!important;}
 img[data-original]{visibility:visible!important;opacity:1!important;}
 </style>`;
   return /<head[^>]*>/i.test(html)
-    ? html.replace(/<head[^>]*>/i, (m) => `${m}${baseTag}`)
+    ? html.replace(/<head[^>]*>/i, (m) => `${m}${previewHead}`)
     : `<head>${previewHead}</head>${html}`;
 }
 
