@@ -22,21 +22,21 @@ export function DomainBar({ defaultUrl = "", onSubmit, disabled, loading, ctaLab
 
   return (
     <form onSubmit={handle} className="w-full">
-      <div className="relative flex items-center gap-2 bg-card/60 backdrop-blur border border-border/60 rounded-2xl p-2 shadow-card focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/30 transition-all">
+      <div className="relative flex items-center gap-2 bg-card/80 backdrop-blur border border-border rounded-lg p-1.5 shadow-card focus-within:border-primary/70 focus-within:ring-2 focus-within:ring-primary/20 transition-all">
         <Globe className="w-5 h-5 text-muted-foreground ml-3" />
         <Input
           type="text"
           inputMode="url"
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          placeholder="example.com"
+          placeholder="yourdomain.com"
           disabled={disabled}
-          className="border-0 bg-transparent text-base md:text-lg h-12 focus-visible:ring-0 focus-visible:ring-offset-0 px-0"
+          className="border-0 bg-transparent text-base md:text-lg h-12 focus-visible:ring-0 focus-visible:ring-offset-0 px-0 font-mono placeholder:text-muted-foreground/60"
         />
         <Button
           type="submit"
           disabled={disabled || loading || !value.trim()}
-          className="h-11 px-5 font-display font-semibold bg-gradient-to-r from-primary to-[hsl(var(--primary-glow))] hover:opacity-90 text-primary-foreground rounded-xl shrink-0"
+          className="h-11 px-5 font-medium bg-primary hover:bg-primary/90 text-primary-foreground rounded-md shrink-0 gap-2"
         >
           {loading ? (
             <Loader2 className="w-4 h-4 animate-spin" />
