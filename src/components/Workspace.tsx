@@ -226,6 +226,7 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
               <PersonaCatalog
                 selectedId={persona.id}
                 onSelect={(p) => goAgain(url, p)}
+                layout="list"
               />
             </div>
           )}

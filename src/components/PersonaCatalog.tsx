@@ -98,7 +98,13 @@ export function PersonaCatalog({ selectedId, onSelect, layout = "grid" }: Props)
         ))}
       </div>
 
-      <div className="flex flex-col gap-1.5">
+      <div
+        className={cn(
+          layout === "grid"
+            ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2"
+            : "flex flex-col gap-1.5",
+        )}
+      >
         {filtered.map((p) => {
           const count = usage[p.id] ?? 0;
           return (
