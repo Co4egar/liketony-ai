@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { RewriteResult } from "@/types/rewrite";
+import { enhancePreviewHtml } from "@/lib/preview-html";
 
 interface Props {
   initialUrl: string;
@@ -132,9 +133,10 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
 
   const previewSrc = useMemo(() => {
     if (!result) return "";
-    return view === "rewritten"
+    const html = view === "rewritten"
       ? result.htmlPreview
       : (result.htmlOriginalPreview ?? result.htmlOriginal);
+    return enhancePreviewHtml(html, result.url);
   }, [result, view]);
 
   return (
