@@ -14,7 +14,72 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      custom_personas: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          name: string
+          short_bio: string
+          signature_phrases: Json
+          slug: string
+          voice_prompt: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          id?: string
+          name: string
+          short_bio: string
+          signature_phrases?: Json
+          slug: string
+          voice_prompt: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          name?: string
+          short_bio?: string
+          signature_phrases?: Json
+          slug?: string
+          voice_prompt?: string
+        }
+        Relationships: []
+      }
+      rewrites: {
+        Row: {
+          created_at: string
+          html_original: string
+          html_rewritten: string
+          id: string
+          persona_id: string
+          persona_name: string
+          public_id: string
+          source_url: string
+        }
+        Insert: {
+          created_at?: string
+          html_original: string
+          html_rewritten: string
+          id?: string
+          persona_id: string
+          persona_name: string
+          public_id: string
+          source_url: string
+        }
+        Update: {
+          created_at?: string
+          html_original?: string
+          html_rewritten?: string
+          id?: string
+          persona_id?: string
+          persona_name?: string
+          public_id?: string
+          source_url?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
