@@ -188,6 +188,7 @@ export function constrainRewritesForLayout(
     const original = seg.text.replace(/\s+/g, " ").trim();
     const len = Array.from(original).length;
     const max =
+      seg.kind === "button" ? Math.min(len + 2, Math.ceil(len * 1.04) + 1) :
       seg.kind !== "text" ? Math.ceil(len * 1.10) + 2 :
       len <= 18 ? len + 2 :
       len <= 40 ? Math.ceil(len * 1.08) + 2 :
