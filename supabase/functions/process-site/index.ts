@@ -181,6 +181,13 @@ Deno.serve(async (req) => {
     });
     if (insertErr) console.error("rewrites insert failed:", insertErr);
 
+    // Bump global persona usage counter (fire-and-forget).
+    supabase
+      .rpc("increment_persona_usage", { p_persona_id: body.persona.id })
+      .then(({ error }) => {
+        if (error) console.error("increment_persona_usage failed:", error);
+      });
+
     return json({
       publicId,
       url,

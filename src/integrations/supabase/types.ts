@@ -47,6 +47,24 @@ export type Database = {
         }
         Relationships: []
       }
+      persona_usage: {
+        Row: {
+          count: number
+          persona_id: string
+          updated_at: string
+        }
+        Insert: {
+          count?: number
+          persona_id: string
+          updated_at?: string
+        }
+        Update: {
+          count?: number
+          persona_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       rewrites: {
         Row: {
           created_at: string
@@ -85,7 +103,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      increment_persona_usage: {
+        Args: { p_persona_id: string }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never

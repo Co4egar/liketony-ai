@@ -1,0 +1,1 @@
+revoke execute on function public.increment_persona_usage(text) from anon, authenticated, public;

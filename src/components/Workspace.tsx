@@ -18,6 +18,8 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { RewriteResult } from "@/types/rewrite";
 import { enhancePreviewHtml } from "@/lib/preview-html";
+import { usePersonaUsage } from "@/hooks/usePersonaUsage";
+import { TrendingUp } from "lucide-react";
 
 interface Props {
   initialUrl: string;
@@ -50,6 +52,8 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
   const [view, setView] = useState<"rewritten" | "original">("rewritten");
   const [changingPersona, setChangingPersona] = useState(false);
   const reqRef = useRef(0);
+  const usage = usePersonaUsage();
+  const personaCount = usage[persona.id] ?? 0;
 
   const loading = pending !== null;
 
@@ -177,10 +181,19 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
             </div>
             <div className="rounded-xl border border-border/60 bg-card/60 p-3 flex items-center gap-3">
               <PersonaAvatar persona={persona} />
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <div className="font-display font-semibold truncate">{persona.name}</div>
                 <div className="text-xs text-muted-foreground line-clamp-2">{persona.shortBio}</div>
               </div>
+              {personaCount > 0 && (
+                <span
+                  className="shrink-0 inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/60 px-2 py-0.5 text-[10px] font-medium text-muted-foreground tabular-nums"
+                  title={`Used ${personaCount.toLocaleString()} times across all sites`}
+                >
+                  <TrendingUp className="w-3 h-3" />
+                  {personaCount.toLocaleString()}
+                </span>
+              )}
             </div>
             <div className="rounded-xl border border-border/60 bg-card/60 p-3 space-y-2">
               <div className="flex items-center justify-between text-[11px] uppercase tracking-wider text-muted-foreground">
