@@ -91,21 +91,22 @@ export function extractSegments(html: string): {
 
   // 4) Visible text nodes — naive but effective: split on tags, walk through.
   const parts = template.split(/(<[^>]+>)/);
-  let inSkip = 0;
+  let skipTag: string | null = null;
   for (let i = 0; i < parts.length; i++) {
     const part = parts[i];
     if (part.startsWith("<")) {
       const tagMatch = part.match(/^<\/?\s*([a-zA-Z0-9]+)/);
       if (tagMatch) {
         const tag = tagMatch[1].toLowerCase();
-        if (SKIP_TAGS.has(tag)) {
-          if (part.startsWith("</")) inSkip = Math.max(0, inSkip - 1);
-          else if (!part.endsWith("/>")) inSkip++;
+        if (skipTag) {
+          if (tag === skipTag && part.startsWith("</")) skipTag = null;
+        } else if (SKIP_TAGS.has(tag) && !part.startsWith("</") && !part.endsWith("/>")) {
+          skipTag = tag;
         }
       }
       continue;
     }
-    if (inSkip > 0) continue;
+    if (skipTag) continue;
     const raw = part;
     const trimmed = raw.trim();
     if (trimmed.length < MIN_LEN) continue;
