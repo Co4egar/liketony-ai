@@ -151,6 +151,36 @@ export function applyRewrites(
 }
 
 /**
+ * Guard visual-builder layouts from AI copy expansion. Builders like Tilda use
+ * absolutely-positioned text boxes, so a short heading becoming a longer phrase
+ * can overlap the next block. Prefer a clean original label over broken layout.
+ */
+export function constrainRewritesForLayout(
+  segments: Segment[],
+  rewritten: Record<number, string>,
+): Record<number, string> {
+  const safe: Record<number, string> = {};
+  for (const seg of segments) {
+    const value = rewritten[seg.id];
+    if (typeof value !== "string") continue;
+    const compact = value.replace(/\s+/g, " ").trim();
+    if (!compact) continue;
+
+    const original = seg.text.replace(/\s+/g, " ").trim();
+    const len = Array.from(original).length;
+    const max =
+      seg.kind !== "text" ? Math.ceil(len * 1.12) + 2 :
+      len <= 18 ? len + 4 :
+      len <= 40 ? Math.ceil(len * 1.15) + 3 :
+      len <= 90 ? Math.ceil(len * 1.18) + 4 :
+      Math.ceil(len * 1.25);
+
+    safe[seg.id] = Array.from(compact).length <= max ? compact : original;
+  }
+  return safe;
+}
+
+/**
  * Make scraped visual builders render as a static document inside a sandboxed iframe.
  * Many builders (notably Tilda) ship HTML that is invisible until their JS adds
  * `*_visible` / animation classes and swaps lazy image attributes into `src`.
@@ -202,10 +232,47 @@ html,body{min-width:0!important;max-width:100%!important;overflow-x:hidden!impor
 body{word-spacing:normal!important;letter-spacing:normal!important;}
 .t-records,.t-records_animated,.t-records.t-records_visible{opacity:1!important;}
 .t-animate,[data-animate-style],[data-animate-style-res-320],[data-animate-style-res-360],[data-animate-style-res-480],[data-animate-style-res-640],[data-animate-style-res-960]{opacity:1!important;transform:none!important;transition:none!important;}
-.t396__artboard,.t396__carrier,.t396__filter{overflow:visible!important;}
+.t396__artboard,.t396__carrier,.t396__filter{overflow:hidden!important;}
 img[data-original]{visibility:visible!important;opacity:1!important;}
-p,h1,h2,h3,h4,h5,h6,span,a,li,div{word-break:normal;overflow-wrap:break-word;hyphens:none;white-space:normal;}
-</style>`;
+p,h1,h2,h3,h4,h5,h6,span,a,li{word-break:normal;overflow-wrap:break-word;hyphens:none;}
+.t396__elem[data-elem-type="text"],.t396__elem[data-elem-type="button"]{box-sizing:border-box!important;}
+.t396__elem[data-elem-type="text"] .tn-atom,.t396__elem[data-elem-type="button"] .tn-atom{box-sizing:border-box!important;word-spacing:normal!important;letter-spacing:0!important;word-break:normal!important;hyphens:none!important;}
+</style><script id="personaswap-text-fit">
+(function(){
+  function fitText(){
+    var nodes=document.querySelectorAll('.t396__elem[data-elem-type="text"] .tn-atom,.t396__elem[data-elem-type="button"] .tn-atom');
+    nodes.forEach(function(atom){
+      var elem=atom.closest('.t396__elem');
+      if(!elem) return;
+      var art=elem.closest('.t396__artboard')||document.documentElement;
+      var er=elem.getBoundingClientRect();
+      var ar=art.getBoundingClientRect();
+      var css=getComputedStyle(atom);
+      var fontSize=parseFloat(css.fontSize)||16;
+      atom.style.wordSpacing='normal';
+      atom.style.letterSpacing='0px';
+      atom.style.wordBreak='normal';
+      atom.style.hyphens='none';
+      if(fontSize>=28){
+        atom.style.whiteSpace='nowrap';
+        atom.style.display='inline-block';
+        var available=Math.max(80, ar.width-(er.left-ar.left)-16);
+        var guard=0;
+        while(atom.scrollWidth>available && fontSize>18 && guard<16){
+          fontSize=fontSize*0.94;
+          atom.style.fontSize=fontSize+'px';
+          guard++;
+        }
+      } else {
+        atom.style.whiteSpace=css.whiteSpace==='nowrap'?'nowrap':'normal';
+        atom.style.overflowWrap='break-word';
+      }
+    });
+  }
+  document.addEventListener('DOMContentLoaded',fitText);
+  window.addEventListener('load',function(){fitText();setTimeout(fitText,300);setTimeout(fitText,1200);});
+})();
+</script>`;
 
   return /<head[^>]*>/i.test(out)
     ? out.replace(/<head[^>]*>/i, (m) => `${m}${previewHead}`)
