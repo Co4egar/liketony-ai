@@ -187,13 +187,16 @@ export function constrainRewritesForLayout(
 
     const original = seg.text.replace(/\s+/g, " ").trim();
     const len = Array.from(original).length;
+    // Strict length cap — visual builders (Tilda) use absolute positioning,
+    // so any growth past the original box breaks the layout. Allow tiny
+    // wiggle room only; otherwise fall back to the original copy.
     const max =
-      seg.kind === "button" ? Math.min(len + 2, Math.ceil(len * 1.04) + 1) :
-      seg.kind !== "text" ? Math.ceil(len * 1.10) + 2 :
-      len <= 18 ? len + 2 :
-      len <= 40 ? Math.ceil(len * 1.08) + 2 :
-      len <= 90 ? Math.ceil(len * 1.10) + 3 :
-      Math.ceil(len * 1.15);
+      seg.kind === "button" ? Math.min(len + 1, Math.ceil(len * 1.02) + 1) :
+      seg.kind !== "text" ? Math.ceil(len * 1.05) + 1 :
+      len <= 18 ? len + 1 :
+      len <= 40 ? Math.ceil(len * 1.04) + 1 :
+      len <= 90 ? Math.ceil(len * 1.06) + 2 :
+      Math.ceil(len * 1.08);
 
     safe[seg.id] = Array.from(compact).length <= max ? compact : original;
   }
