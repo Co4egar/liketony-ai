@@ -91,21 +91,22 @@ export function extractSegments(html: string): {
 
   // 4) Visible text nodes — naive but effective: split on tags, walk through.
   const parts = template.split(/(<[^>]+>)/);
-  let inSkip = 0;
+  let skipTag: string | null = null;
   for (let i = 0; i < parts.length; i++) {
     const part = parts[i];
     if (part.startsWith("<")) {
       const tagMatch = part.match(/^<\/?\s*([a-zA-Z0-9]+)/);
       if (tagMatch) {
         const tag = tagMatch[1].toLowerCase();
-        if (SKIP_TAGS.has(tag)) {
-          if (part.startsWith("</")) inSkip = Math.max(0, inSkip - 1);
-          else if (!part.endsWith("/>")) inSkip++;
+        if (skipTag) {
+          if (tag === skipTag && part.startsWith("</")) skipTag = null;
+        } else if (SKIP_TAGS.has(tag) && !part.startsWith("</") && !part.endsWith("/>")) {
+          skipTag = tag;
         }
       }
       continue;
     }
-    if (inSkip > 0) continue;
+    if (skipTag) continue;
     const raw = part;
     const trimmed = raw.trim();
     if (trimmed.length < MIN_LEN) continue;
@@ -147,6 +148,66 @@ export function applyRewrites(
   // Also strip any stray NUL bytes (Postgres TEXT can't store them).
   out = out.replace(/\u0000/g, "");
   return out;
+}
+
+/**
+ * Make scraped visual builders render as a static document inside a sandboxed iframe.
+ * Many builders (notably Tilda) ship HTML that is invisible until their JS adds
+ * `*_visible` / animation classes and swaps lazy image attributes into `src`.
+ */
+export function prepareStaticPreviewHtml(html: string, sourceUrl: string): string {
+  const safeUrl = sourceUrl.replaceAll('"', "&quot;");
+  let out = html.replace(/<base\b[^>]*>/gi, "");
+
+  out = out.replace(
+    /<img\b([^>]*?)\bdata-original\s*=\s*("([^"]*)"|'([^']*)')([^>]*)>/gi,
+    (match, before, _quoted, dq, sq, after) => {
+      const url = dq ?? sq ?? "";
+      const attrs = `${before}${after}`;
+      const withSrc = /\ssrc\s*=/i.test(attrs)
+        ? match.replace(/\ssrc\s*=\s*("[^"]*"|'[^']*')/i, ` src="${url}"`)
+        : `<img${before} src="${url}" data-original="${url}"${after}>`;
+      return /\bloading\s*=/i.test(withSrc) ? withSrc : withSrc.replace(/<img\b/i, '<img loading="lazy"');
+    },
+  );
+
+  out = out.replace(
+    /<(source|img)\b([^>]*?)\bdata-originalset\s*=\s*("([^"]*)"|'([^']*)')([^>]*)>/gi,
+    (match, tag, before, _quoted, dq, sq, after) => {
+      const value = dq ?? sq ?? "";
+      return /\ssrcset\s*=/i.test(`${before}${after}`)
+        ? match.replace(/\ssrcset\s*=\s*("[^"]*"|'[^']*')/i, ` srcset="${value}"`)
+        : `<${tag}${before} srcset="${value}" data-originalset="${value}"${after}>`;
+    },
+  );
+
+  out = out.replace(
+    /<([a-z][\w:-]*)\b([^>]*?)\bdata-original\s*=\s*("([^"]*)"|'([^']*)')([^>]*)>/gi,
+    (match, tag, before, _quoted, dq, sq, after) => {
+      if (tag.toLowerCase() === "img") return match;
+      const url = dq ?? sq ?? "";
+      if (!/\bt-bgimg\b|\bdata-original\b/i.test(match) || /background-image\s*:/i.test(match)) return match;
+      const styleMatch = match.match(/\sstyle\s*=\s*("([^"]*)"|'([^']*)')/i);
+      const bg = `background-image:url('${url.replaceAll("'", "%27")}')`;
+      if (styleMatch) {
+        const current = styleMatch[2] ?? styleMatch[3] ?? "";
+        return match.replace(styleMatch[0], ` style="${bg};${current}"`);
+      }
+      return match.replace(/>$/, ` style="${bg};">`);
+    },
+  );
+
+  const previewHead = `<base href="${safeUrl}"><style id="personaswap-static-preview-fix">
+html,body{min-width:0!important;}
+.t-records,.t-records_animated,.t-records.t-records_visible{opacity:1!important;}
+.t-animate,[data-animate-style],[data-animate-style-res-320],[data-animate-style-res-360],[data-animate-style-res-480],[data-animate-style-res-640],[data-animate-style-res-960]{opacity:1!important;transform:none!important;transition:none!important;}
+.t396__artboard,.t396__carrier,.t396__filter{overflow:visible!important;}
+img[data-original]{visibility:visible!important;opacity:1!important;}
+</style>`;
+
+  return /<head[^>]*>/i.test(out)
+    ? out.replace(/<head[^>]*>/i, (m) => `${m}${previewHead}`)
+    : `<head>${previewHead}</head>${out}`;
 }
 
 export function generatePublicId(): string {

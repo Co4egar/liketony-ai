@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, forwardRef } from "react";
 import {
   Download,
   ExternalLink,
@@ -31,7 +31,10 @@ const STAGES = [
   "Rendering preview",
 ] as const;
 
-export function Workspace({ initialUrl, initialPersona, onClose }: Props) {
+export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
+  { initialUrl, initialPersona, onClose },
+  ref,
+) {
   const [url, setUrl] = useState(initialUrl);
   const [persona, setPersona] = useState<Persona>(initialPersona);
   const [pending, setPending] = useState<{ url: string; persona: Persona } | null>({
@@ -135,7 +138,7 @@ export function Workspace({ initialUrl, initialPersona, onClose }: Props) {
   }, [result, view]);
 
   return (
-    <div className="fixed inset-0 z-30 flex bg-background animate-fade-in">
+    <div ref={ref} className="fixed inset-0 z-30 flex bg-background animate-fade-in">
       {/* Sidebar */}
       <aside className="w-full sm:w-[340px] border-r border-border/60 bg-card/40 backdrop-blur flex flex-col">
         <div className="p-4 border-b border-border/60 flex items-center justify-between">
@@ -288,7 +291,7 @@ export function Workspace({ initialUrl, initialPersona, onClose }: Props) {
                 key={`${view}-${result.publicId}`}
                 title="Preview"
                 srcDoc={previewSrc}
-                sandbox="allow-same-origin allow-popups"
+                sandbox="allow-same-origin allow-scripts allow-popups"
                 style={{ width: "1440px", height: "calc((100vh - 130px) * (1440 / var(--pv-w, 1000)))", transform: "scale(var(--pv-scale, 0.7))", transformOrigin: "top left" }}
                 className="block bg-white"
                 ref={(el) => {
@@ -314,4 +317,4 @@ export function Workspace({ initialUrl, initialPersona, onClose }: Props) {
       </main>
     </div>
   );
-}
+});
