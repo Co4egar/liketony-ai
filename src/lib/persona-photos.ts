@@ -82,12 +82,11 @@ export const WIKI_SLUGS: Record<string, string> = {
 // or returns the wrong image (a logo / poster instead of the character).
 // These take priority over WIKI_SLUGS lookup.
 import hormoziPortrait from "@/assets/persona-hormozi.webp";
+import bugsBunnyPortrait from "@/assets/persona-bugs-bunny.jpg";
 
 export const PHOTO_OVERRIDES: Record<string, string> = {
   hormozi: hormoziPortrait,
-  // Default Bugs_Bunny Wikipedia summary returns the Looney Tunes SVG logo.
-  "bugs-bunny":
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Bugs_Bunny_in_MultiVersus_trailer.png/512px-Bugs_Bunny_in_MultiVersus_trailer.png",
+  "bugs-bunny": bugsBunnyPortrait,
 };
 
 const memCache = new Map<string, string | null>();
