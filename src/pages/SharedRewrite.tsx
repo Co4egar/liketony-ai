@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { Loader2, Download, ArrowLeft, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { enhancePreviewHtml } from "@/lib/preview-html";
 
 interface Rewrite {
   source_url: string;
@@ -56,8 +57,8 @@ const SharedRewrite = () => {
   }
 
   const previewHtml = view === "rewritten"
-    ? injectBase(data.html_rewritten, data.source_url)
-    : injectBase(data.html_original, data.source_url);
+    ? enhancePreviewHtml(data.html_rewritten, data.source_url)
+    : enhancePreviewHtml(data.html_original, data.source_url);
 
   const handleDownload = () => {
     const blob = new Blob([data.html_rewritten], { type: "text/html" });
@@ -117,19 +118,5 @@ const SharedRewrite = () => {
     </div>
   );
 };
-
-function injectBase(html: string, url: string): string {
-  const safeUrl = url.replace(/"/g, "&quot;");
-  const previewHead = `<base href="${safeUrl}"><style id="personaswap-static-preview-fix">
-html,body{min-width:0!important;}
-.t-records,.t-records_animated,.t-records.t-records_visible{opacity:1!important;}
-.t-animate,[data-animate-style],[data-animate-style-res-320],[data-animate-style-res-360],[data-animate-style-res-480],[data-animate-style-res-640],[data-animate-style-res-960]{opacity:1!important;transform:none!important;transition:none!important;}
-.t396__artboard,.t396__carrier,.t396__filter{overflow:visible!important;}
-img[data-original]{visibility:visible!important;opacity:1!important;}
-</style>`;
-  return /<head[^>]*>/i.test(html)
-    ? html.replace(/<head[^>]*>/i, (m) => `${m}${previewHead}`)
-    : `<head>${previewHead}</head>${html}`;
-}
 
 export default SharedRewrite;
