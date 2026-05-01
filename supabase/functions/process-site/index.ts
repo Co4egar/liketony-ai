@@ -34,7 +34,7 @@ async function scrape(url: string): Promise<string> {
     },
     body: JSON.stringify({
       url,
-      formats: ["html"],
+      formats: ["rawHtml", "html"],
       onlyMainContent: false,
       waitFor: 1500,
     }),
@@ -48,7 +48,12 @@ async function scrape(url: string): Promise<string> {
     }
     throw new Error(msg);
   }
-  const html: string | undefined = data?.data?.html ?? data?.html;
+  // Prefer rawHtml — it preserves the original <head>, <link rel=stylesheet>,
+  // inline <style>, and full DOM. The `html` field is a cleaned/main-content
+  // version that strips styles and breaks the visual layout.
+  const payload = data?.data ?? data;
+  const html: string | undefined =
+    payload?.rawHtml ?? payload?.raw_html ?? payload?.html;
   if (!html) throw new Error("No HTML returned from scrape");
   if (html.length > MAX_HTML_BYTES) {
     throw new Error("Page too large to process (limit ~1.5MB)");
@@ -139,11 +144,15 @@ Deno.serve(async (req) => {
     const rewrittenMap = await rewriteSegments(segments, body.persona);
     const finalHtml = applyRewrites(template, segments, rewrittenMap);
 
-    // Inject a <base> tag so relative URLs in the preview keep working.
+    // Inject a <base> tag so relative URLs (CSS, images, fonts) resolve against
+    // the source domain inside our iframe preview. Apply to BOTH versions.
     const baseTag = `<base href="${url}">`;
-    const previewHtml = /<head[^>]*>/i.test(finalHtml)
-      ? finalHtml.replace(/<head[^>]*>/i, (m) => `${m}${baseTag}`)
-      : `${baseTag}${finalHtml}`;
+    const injectBase = (h: string) =>
+      /<head[^>]*>/i.test(h)
+        ? h.replace(/<head[^>]*>/i, (m) => `${m}${baseTag}`)
+        : `<head>${baseTag}</head>${h}`;
+    const previewHtml = injectBase(finalHtml);
+    const originalPreview = injectBase(html);
 
     // Persist for share link.
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -166,6 +175,7 @@ Deno.serve(async (req) => {
       htmlRewritten: finalHtml,
       htmlPreview: previewHtml,
       htmlOriginal: html,
+      htmlOriginalPreview: originalPreview,
       segmentCount: segments.length,
       rewrittenCount: Object.keys(rewrittenMap).length,
     });

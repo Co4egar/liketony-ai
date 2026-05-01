@@ -6,6 +6,7 @@ export interface RewriteResult {
   htmlRewritten: string;
   htmlPreview: string;
   htmlOriginal: string;
+  htmlOriginalPreview?: string;
   segmentCount: number;
   rewrittenCount: number;
 }

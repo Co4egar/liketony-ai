@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { Persona } from "@/data/personas";
 
 const COLORS = [
@@ -26,22 +27,26 @@ function hashIdx(s: string, mod: number) {
   return Math.abs(h) % mod;
 }
 
-interface Props {
+interface Props extends React.HTMLAttributes<HTMLDivElement> {
   persona: Pick<Persona, "id" | "name">;
   size?: "sm" | "md" | "lg";
-  className?: string;
 }
 
-export function PersonaAvatar({ persona, size = "md", className = "" }: Props) {
-  const gradient = COLORS[hashIdx(persona.id, COLORS.length)];
-  const sizeCls =
-    size === "sm" ? "w-8 h-8 text-xs" : size === "lg" ? "w-14 h-14 text-lg" : "w-10 h-10 text-sm";
-  return (
-    <div
-      className={`shrink-0 rounded-full bg-gradient-to-br ${gradient} ${sizeCls} flex items-center justify-center font-display font-semibold text-white shadow-lg ${className}`}
-      aria-hidden
-    >
-      {initials(persona.name)}
-    </div>
-  );
-}
+export const PersonaAvatar = forwardRef<HTMLDivElement, Props>(
+  ({ persona, size = "md", className = "", ...rest }, ref) => {
+    const gradient = COLORS[hashIdx(persona.id, COLORS.length)];
+    const sizeCls =
+      size === "sm" ? "w-8 h-8 text-xs" : size === "lg" ? "w-14 h-14 text-lg" : "w-10 h-10 text-sm";
+    return (
+      <div
+        ref={ref}
+        {...rest}
+        className={`shrink-0 rounded-full bg-gradient-to-br ${gradient} ${sizeCls} flex items-center justify-center font-display font-semibold text-white shadow-lg ${className}`}
+        aria-hidden
+      >
+        {initials(persona.name)}
+      </div>
+    );
+  },
+);
+PersonaAvatar.displayName = "PersonaAvatar";

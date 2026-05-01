@@ -129,7 +129,9 @@ export function Workspace({ initialUrl, initialPersona, onClose }: Props) {
 
   const previewSrc = useMemo(() => {
     if (!result) return "";
-    return view === "rewritten" ? result.htmlPreview : result.htmlOriginal;
+    return view === "rewritten"
+      ? result.htmlPreview
+      : (result.htmlOriginalPreview ?? result.htmlOriginal);
   }, [result, view]);
 
   return (
