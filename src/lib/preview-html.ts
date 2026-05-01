@@ -1,5 +1,5 @@
 export function enhancePreviewHtml(html: string, sourceUrl: string): string {
-  const safeUrl = sourceUrl.replaceAll('"', '&quot;');
+  const safeUrl = sourceUrl.replace(/"/g, '&quot;');
   const cleaned = html.replace(/<base\b[^>]*>/gi, '');
   const injection = `<base href="${safeUrl}"><style id="personaswap-runtime-preview-fix">
 html,body{min-width:0!important;max-width:100%!important;overflow-x:hidden!important;}
