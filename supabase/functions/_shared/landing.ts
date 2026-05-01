@@ -239,35 +239,34 @@ p,h1,h2,h3,h4,h5,h6,span,a,li{word-break:normal;overflow-wrap:break-word;hyphens
 .t396__elem[data-elem-type="text"] .tn-atom,.t396__elem[data-elem-type="button"] .tn-atom{box-sizing:border-box!important;word-spacing:normal!important;letter-spacing:0!important;word-break:normal!important;hyphens:none!important;}
 </style><script id="personaswap-text-fit">
 (function(){
+  function fitOne(atom){
+    var elem=atom.closest('.t396__elem');
+    if(!elem) return;
+    var css=getComputedStyle(atom);
+    var fontSize=parseFloat(css.fontSize)||16;
+    atom.style.wordSpacing='normal';
+    atom.style.letterSpacing='0px';
+    atom.style.wordBreak='normal';
+    atom.style.hyphens='none';
+    atom.style.overflowWrap='break-word';
+    // Respect Tilda's width — never force nowrap (it caused overflow into adjacent blocks).
+    if(css.whiteSpace==='nowrap') atom.style.whiteSpace='normal';
+    var maxW=elem.clientWidth||elem.getBoundingClientRect().width;
+    var maxH=elem.clientHeight||elem.getBoundingClientRect().height;
+    if(!maxW) return;
+    var minSize=Math.max(11, fontSize*0.55);
+    var guard=0;
+    while(guard<24 && fontSize>minSize && (atom.scrollWidth>maxW+1 || (maxH>0 && atom.scrollHeight>maxH+1))){
+      fontSize=fontSize*0.93;
+      atom.style.fontSize=fontSize+'px';
+      var lh=parseFloat(getComputedStyle(atom).lineHeight);
+      if(!isNaN(lh) && lh>fontSize*1.6) atom.style.lineHeight=(fontSize*1.2)+'px';
+      guard++;
+    }
+  }
   function fitText(){
     var nodes=document.querySelectorAll('.t396__elem[data-elem-type="text"] .tn-atom,.t396__elem[data-elem-type="button"] .tn-atom');
-    nodes.forEach(function(atom){
-      var elem=atom.closest('.t396__elem');
-      if(!elem) return;
-      var art=elem.closest('.t396__artboard')||document.documentElement;
-      var er=elem.getBoundingClientRect();
-      var ar=art.getBoundingClientRect();
-      var css=getComputedStyle(atom);
-      var fontSize=parseFloat(css.fontSize)||16;
-      atom.style.wordSpacing='normal';
-      atom.style.letterSpacing='0px';
-      atom.style.wordBreak='normal';
-      atom.style.hyphens='none';
-      if(fontSize>=28){
-        atom.style.whiteSpace='nowrap';
-        atom.style.display='inline-block';
-        var available=Math.max(80, ar.width-(er.left-ar.left)-16);
-        var guard=0;
-        while(atom.scrollWidth>available && fontSize>18 && guard<16){
-          fontSize=fontSize*0.94;
-          atom.style.fontSize=fontSize+'px';
-          guard++;
-        }
-      } else {
-        atom.style.whiteSpace=css.whiteSpace==='nowrap'?'nowrap':'normal';
-        atom.style.overflowWrap='break-word';
-      }
-    });
+    nodes.forEach(fitOne);
   }
   document.addEventListener('DOMContentLoaded',fitText);
   window.addEventListener('load',function(){fitText();setTimeout(fitText,300);setTimeout(fitText,1200);});
