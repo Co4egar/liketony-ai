@@ -43,7 +43,7 @@ const Index = () => {
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-[hsl(var(--primary-glow))] flex items-center justify-center shadow-glow">
             <Sparkles className="w-4 h-4 text-primary-foreground" />
           </div>
-          <span className="font-display font-bold text-lg">PersonaSwap</span>
+          <span className="font-display font-bold text-lg">PersonaPress</span>
         </div>
         <a
           href="https://docs.lovable.dev"

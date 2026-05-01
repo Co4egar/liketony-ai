@@ -155,7 +155,7 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
           <button onClick={onClose} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
             <ChevronLeft className="w-4 h-4" /> Home
           </button>
-          <span className="text-xs text-muted-foreground font-display">PersonaSwap</span>
+          <span className="text-xs text-muted-foreground font-display">PersonaPress</span>
         </div>
 
         <div className="p-4 space-y-4 overflow-y-auto scrollbar-thin flex-1">

@@ -212,8 +212,8 @@ export function prepareStaticPreviewHtml(html: string, sourceUrl: string): strin
   const safeUrl = sourceUrl.replaceAll('"', "&quot;");
   let out = html
     .replace(/<base\b[^>]*>/gi, "")
-    .replace(/<style\b[^>]*id=["']personaswap-[^"']*["'][\s\S]*?<\/style>/gi, "")
-    .replace(/<script\b[^>]*id=["']personaswap-[^"']*["'][\s\S]*?<\/script>/gi, "");
+    .replace(/<style\b[^>]*id=["']personapress-[^"']*["'][\s\S]*?<\/style>/gi, "")
+    .replace(/<script\b[^>]*id=["']personapress-[^"']*["'][\s\S]*?<\/script>/gi, "");
 
   out = out.replace(
     /<img\b([^>]*?)\bdata-original\s*=\s*("([^"]*)"|'([^']*)')([^>]*)>/gi,
@@ -253,13 +253,13 @@ export function prepareStaticPreviewHtml(html: string, sourceUrl: string): strin
     },
   );
 
-  const previewHead = `<base href="${safeUrl}"><style id="personaswap-static-preview-fix">
+  const previewHead = `<base href="${safeUrl}"><style id="personapress-static-preview-fix">
 html,body{min-width:0!important;max-width:100%!important;overflow-x:hidden!important;}
 .t-records,.t-records_animated,.t-records.t-records_visible{opacity:1!important;}
 .t-animate,[data-animate-style],[data-animate-style-res-320],[data-animate-style-res-360],[data-animate-style-res-480],[data-animate-style-res-640],[data-animate-style-res-960]{opacity:1!important;transform:none!important;transition:none!important;}
 .t396__artboard,.t396__carrier,.t396__filter{overflow:hidden!important;}
 img[data-original]{visibility:visible!important;opacity:1!important;}
-</style><script id="personaswap-text-fit">
+</style><script id="personapress-text-fit">
 (function(){
   function each(list,fn){Array.prototype.forEach.call(list,fn);}
   function activeField(elem,name){
