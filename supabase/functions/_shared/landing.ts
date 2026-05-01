@@ -13,8 +13,9 @@ export interface Segment {
   text: string;
 }
 
-const PLACEHOLDER_PREFIX = "\u0000PSWAP_";
-const PLACEHOLDER_SUFFIX = "\u0000";
+// Use printable ASCII tokens — Postgres text columns reject NUL (\u0000).
+const PLACEHOLDER_PREFIX = "@@PSWAP_";
+const PLACEHOLDER_SUFFIX = "@@";
 
 const placeholder = (id: number) => `${PLACEHOLDER_PREFIX}${id}${PLACEHOLDER_SUFFIX}`;
 
@@ -141,6 +142,10 @@ export function applyRewrites(
         : replacement.replaceAll('"', "&quot;").replaceAll("'", "&#39;");
     out = out.split(placeholder(seg.id)).join(safe);
   }
+  // Safety net: strip any orphan placeholders left behind so they never appear in the UI.
+  out = out.replace(/@@PSWAP_\d+@@/g, "");
+  // Also strip any stray NUL bytes (Postgres TEXT can't store them).
+  out = out.replace(/\u0000/g, "");
   return out;
 }
 
