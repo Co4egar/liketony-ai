@@ -81,13 +81,13 @@ export const WIKI_SLUGS: Record<string, string> = {
 // Hand-picked overrides for personas where Wikipedia has no usable photo
 // or returns the wrong image (a logo / poster instead of the character).
 // These take priority over WIKI_SLUGS lookup.
-import hormoziPortrait from "@/assets/persona-hormozi.jpg";
+import hormoziPortrait from "@/assets/persona-hormozi.webp";
 
 export const PHOTO_OVERRIDES: Record<string, string> = {
   hormozi: hormoziPortrait,
-  // Wikipedia returns the show's SVG logo for the default Bugs_Bunny page.
+  // Default Bugs_Bunny Wikipedia summary returns the Looney Tunes SVG logo.
   "bugs-bunny":
-    "https://upload.wikimedia.org/wikipedia/en/2/22/Bugs_Bunny_-_Looney_Tunes.png",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Bugs_Bunny_in_MultiVersus_trailer.png/512px-Bugs_Bunny_in_MultiVersus_trailer.png",
 };
 
 const memCache = new Map<string, string | null>();
