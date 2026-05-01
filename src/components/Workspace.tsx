@@ -286,35 +286,79 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
                 </Button>
               </div>
             </div>
-            <div className="flex-1 overflow-auto bg-white">
-              <iframe
-                key={`${view}-${result.publicId}`}
-                title="Preview"
-                srcDoc={previewSrc}
-                sandbox="allow-same-origin allow-scripts allow-popups"
-                style={{ width: "1440px", height: "calc((100vh - 130px) * (1440 / var(--pv-w, 1000)))", transform: "scale(var(--pv-scale, 0.7))", transformOrigin: "top left" }}
-                className="block bg-white"
-                ref={(el) => {
-                  if (!el) return;
-                  const fit = () => {
-                    const parent = el.parentElement;
-                    if (!parent) return;
-                    const w = parent.clientWidth;
-                    const scale = Math.min(1, w / 1440);
-                    el.style.setProperty("--pv-w", String(w));
-                    el.style.setProperty("--pv-scale", String(scale));
-                    el.style.width = "1440px";
-                    el.style.height = `${parent.clientHeight / scale}px`;
-                  };
-                  fit();
-                  const ro = new ResizeObserver(fit);
-                  ro.observe(el.parentElement!);
-                }}
-              />
-            </div>
+            <PreviewFrame key={`${view}-${result.publicId}`} srcDoc={previewSrc} />
           </>
         )}
       </main>
     </div>
   );
 });
+
+const BASE_W = 1440;
+
+function PreviewFrame({ srcDoc }: { srcDoc: string }) {
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [scale, setScale] = useState(1);
+  const [contentH, setContentH] = useState(900);
+
+  useEffect(() => {
+    const fit = () => {
+      const w = wrapRef.current?.clientWidth ?? BASE_W;
+      setScale(Math.min(1, w / BASE_W));
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    if (wrapRef.current) ro.observe(wrapRef.current);
+    return () => ro.disconnect();
+  }, []);
+
+  // Measure inner iframe document height.
+  const measure = () => {
+    const doc = iframeRef.current?.contentDocument;
+    if (!doc) return;
+    const h = Math.max(
+      doc.documentElement?.scrollHeight ?? 0,
+      doc.body?.scrollHeight ?? 0,
+      900,
+    );
+    setContentH(h);
+  };
+
+  useEffect(() => {
+    const id = window.setInterval(measure, 600);
+    return () => window.clearInterval(id);
+  }, [srcDoc]);
+
+  return (
+    <div ref={wrapRef} className="flex-1 overflow-auto bg-white">
+      <div
+        ref={innerRef}
+        style={{
+          width: `${BASE_W * scale}px`,
+          height: `${contentH * scale}px`,
+          position: "relative",
+        }}
+      >
+        <iframe
+          ref={iframeRef}
+          title="Preview"
+          srcDoc={srcDoc}
+          sandbox="allow-same-origin allow-scripts allow-popups"
+          onLoad={measure}
+          style={{
+            width: `${BASE_W}px`,
+            height: `${contentH}px`,
+            transform: `scale(${scale})`,
+            transformOrigin: "top left",
+            border: 0,
+            display: "block",
+            background: "white",
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
