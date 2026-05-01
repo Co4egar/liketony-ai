@@ -13,6 +13,7 @@ import {
 
 interface RequestBody {
   url: string;
+  intensity?: number; // 0 = chill, 100 = aggressive sales
   persona: {
     id: string;
     name: string;
