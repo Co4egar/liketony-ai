@@ -38,9 +38,11 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
 ) {
   const [url, setUrl] = useState(initialUrl);
   const [persona, setPersona] = useState<Persona>(initialPersona);
-  const [pending, setPending] = useState<{ url: string; persona: Persona } | null>({
+  const [intensity, setIntensity] = useState(50);
+  const [pending, setPending] = useState<{ url: string; persona: Persona; intensity: number } | null>({
     url: initialUrl,
     persona: initialPersona,
+    intensity: 50,
   });
   const [stage, setStage] = useState(0);
   const [result, setResult] = useState<RewriteResult | null>(null);
