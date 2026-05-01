@@ -6,6 +6,7 @@ import {
   extractSegments,
   generatePublicId,
   normalizeUrl,
+  prepareStaticPreviewHtml,
   type Segment,
 } from "../_shared/landing.ts";
 
@@ -144,15 +145,9 @@ Deno.serve(async (req) => {
     const rewrittenMap = await rewriteSegments(segments, body.persona);
     const finalHtml = applyRewrites(template, segments, rewrittenMap);
 
-    // Inject a <base> tag so relative URLs (CSS, images, fonts) resolve against
-    // the source domain inside our iframe preview. Apply to BOTH versions.
-    const baseTag = `<base href="${url}">`;
-    const injectBase = (h: string) =>
-      /<head[^>]*>/i.test(h)
-        ? h.replace(/<head[^>]*>/i, (m) => `${m}${baseTag}`)
-        : `<head>${baseTag}</head>${h}`;
-    const previewHtml = injectBase(finalHtml);
-    const originalPreview = injectBase(html);
+    // Convert JS-dependent scraped pages into visible static previews.
+    const previewHtml = prepareStaticPreviewHtml(finalHtml, url);
+    const originalPreview = prepareStaticPreviewHtml(html, url);
 
     // Persist for share link.
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
