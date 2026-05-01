@@ -362,13 +362,3 @@ function PreviewFrame({ srcDoc }: { srcDoc: string }) {
   );
 }
 
-const _trailingNoop = () => {
-  return (
-    <></>
-  );
-          </>
-        )}
-      </main>
-    </div>
-  );
-});
