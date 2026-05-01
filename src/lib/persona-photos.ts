@@ -67,7 +67,7 @@ export const WIKI_SLUGS: Record<string, string> = {
   mandela: "Nelson_Mandela",
   // Cartoons
   "homer-simpson": "Homer_Simpson",
-  spongebob: "SpongeBob_SquarePants",
+  spongebob: "SpongeBob_SquarePants_(character)",
   "rick-sanchez": "Rick_Sanchez",
   "bugs-bunny": "Bugs_Bunny",
   shrek: "Shrek_(character)",
@@ -78,8 +78,20 @@ export const WIKI_SLUGS: Record<string, string> = {
   "scooby-doo": "Scooby-Doo_(character)",
 };
 
+// Hand-picked overrides for personas where Wikipedia has no usable photo
+// or returns the wrong image (a logo / poster instead of the character).
+// These take priority over WIKI_SLUGS lookup.
+import hormoziPortrait from "@/assets/persona-hormozi.jpg";
+
+export const PHOTO_OVERRIDES: Record<string, string> = {
+  hormozi: hormoziPortrait,
+  // Wikipedia returns the show's SVG logo for the default Bugs_Bunny page.
+  "bugs-bunny":
+    "https://upload.wikimedia.org/wikipedia/en/2/22/Bugs_Bunny_-_Looney_Tunes.png",
+};
+
 const memCache = new Map<string, string | null>();
-const STORAGE_KEY = "personaswap.photoCache.v1";
+const STORAGE_KEY = "personapress.photoCache.v2";
 
 function loadStorage(): Record<string, string | null> {
   try {
@@ -109,6 +121,12 @@ const inflight = new Map<string, Promise<string | null>>();
 
 export async function fetchPersonaPhoto(personaId: string, name: string): Promise<string | null> {
   hydrate();
+  // 1. Hard overrides win.
+  if (PHOTO_OVERRIDES[personaId]) {
+    const url = PHOTO_OVERRIDES[personaId];
+    memCache.set(personaId, url);
+    return url;
+  }
   if (memCache.has(personaId)) return memCache.get(personaId) ?? null;
   if (inflight.has(personaId)) return inflight.get(personaId)!;
 
