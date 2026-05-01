@@ -283,15 +283,32 @@ export function Workspace({ initialUrl, initialPersona, onClose }: Props) {
                 </Button>
               </div>
             </div>
-            <iframe
-              key={`${view}-${result.publicId}`}
-              title="Preview"
-              srcDoc={previewSrc}
-              sandbox="allow-same-origin"
-              className="flex-1 w-full bg-white"
-            />
-          </>
-        )}
+            <div className="flex-1 overflow-auto bg-white">
+              <iframe
+                key={`${view}-${result.publicId}`}
+                title="Preview"
+                srcDoc={previewSrc}
+                sandbox="allow-same-origin allow-popups"
+                style={{ width: "1440px", height: "calc((100vh - 130px) * (1440 / var(--pv-w, 1000)))", transform: "scale(var(--pv-scale, 0.7))", transformOrigin: "top left" }}
+                className="block bg-white"
+                ref={(el) => {
+                  if (!el) return;
+                  const fit = () => {
+                    const parent = el.parentElement;
+                    if (!parent) return;
+                    const w = parent.clientWidth;
+                    const scale = Math.min(1, w / 1440);
+                    el.style.setProperty("--pv-w", String(w));
+                    el.style.setProperty("--pv-scale", String(scale));
+                    el.style.width = "1440px";
+                    el.style.height = `${parent.clientHeight / scale}px`;
+                  };
+                  fit();
+                  const ro = new ResizeObserver(fit);
+                  ro.observe(el.parentElement!);
+                }}
+              />
+            </div>
       </main>
     </div>
   );
