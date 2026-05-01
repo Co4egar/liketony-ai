@@ -9,32 +9,63 @@ html,body{min-width:0!important;max-width:100%!important;overflow-x:hidden!impor
 img[data-original]{visibility:visible!important;opacity:1!important;}
 </style><script id="personaswap-runtime-text-fit">
 (function(){
-  // Non-invasive font-size shrinker. Touches ONLY font-size when text actually
-  // overflows its original container. Never touches layout/alignment so the
-  // original Tilda absolute positioning is preserved 1:1.
-  function shrinkToFit(atom){
+  function fitOne(atom){
     var elem=atom.closest('.t396__elem')||atom.parentElement;
     if(!elem) return;
-    var css=getComputedStyle(atom);
-    var fontSize=parseFloat(css.fontSize)||16;
-    if(!fontSize) return;
     var maxW=elem.clientWidth;
     var maxH=elem.clientHeight;
     if(!maxW||!maxH) return;
+    var css=getComputedStyle(atom);
+    var fontSize=parseFloat(css.fontSize)||16;
+    if(!fontSize) return;
+    var fit=elem.getAttribute('data-field-textfit-value')||'';
+    var w=window.innerWidth||document.documentElement.clientWidth;
+    var bps=[320,360,480,640,960];
+    for(var i=0;i<bps.length;i++){
+      if(w<=bps[i]){
+        var v=elem.getAttribute('data-field-textfit-res-'+bps[i]+'-value');
+        if(v){fit=v;break;}
+      }
+    }
+    var isAutoWidth=/^autowidth$/i.test(fit);
+    if(isAutoWidth){
+      atom.style.textAlign='center';
+      atom.style.whiteSpace='nowrap';
+      var minSize=8, maxSize=fontSize*4;
+      var guard=0;
+      while(guard<40 && fontSize>minSize && (atom.scrollWidth>maxW+1 || atom.scrollHeight>maxH+1)){
+        fontSize=fontSize*0.94;
+        atom.style.fontSize=fontSize+'px';
+        guard++;
+      }
+      guard=0;
+      while(guard<40 && fontSize<maxSize && atom.scrollWidth<maxW-2 && atom.scrollHeight<=maxH){
+        var next=fontSize*1.04;
+        atom.style.fontSize=next+'px';
+        if(atom.scrollWidth>maxW+1 || atom.scrollHeight>maxH+1){
+          atom.style.fontSize=fontSize+'px';
+          break;
+        }
+        fontSize=next;
+        guard++;
+      }
+      return;
+    }
     if(atom.scrollWidth<=maxW+1 && atom.scrollHeight<=maxH+1) return;
-    var minSize=Math.max(8,fontSize*0.45);
-    var guard=0;
-    while(guard<32 && fontSize>minSize && (atom.scrollWidth>maxW+1 || atom.scrollHeight>maxH+1)){
+    var minSize2=Math.max(8,fontSize*0.45);
+    var guard2=0;
+    while(guard2<32 && fontSize>minSize2 && (atom.scrollWidth>maxW+1 || atom.scrollHeight>maxH+1)){
       fontSize=fontSize*0.94;
       atom.style.fontSize=fontSize+'px';
-      guard++;
+      guard2++;
     }
   }
   function fitText(){
-    document.querySelectorAll('.t396__elem[data-elem-type="text"] .tn-atom,.t396__elem[data-elem-type="button"] .tn-atom,.t396__elem[data-elem-type="text"] .tn-atom__text').forEach(shrinkToFit);
+    document.querySelectorAll('.t396__elem[data-elem-type="text"] .tn-atom,.t396__elem[data-elem-type="button"] .tn-atom').forEach(fitOne);
   }
   document.addEventListener('DOMContentLoaded',fitText);
   window.addEventListener('load',function(){fitText();setTimeout(fitText,400);setTimeout(fitText,1500);});
+  window.addEventListener('resize',function(){clearTimeout(window.__psFitT);window.__psFitT=setTimeout(fitText,150);});
 })();
 </script>`;
 
