@@ -72,6 +72,7 @@ export const PersonaAvatar = forwardRef<HTMLDivElement, Props>(
             loading="lazy"
             onLoad={() => setLoaded(true)}
             onError={() => setPhoto(null)}
+            style={{ objectPosition: "center 25%" }}
             className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-200 ${
               loaded ? "opacity-100" : "opacity-0"
             }`}
