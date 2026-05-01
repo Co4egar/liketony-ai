@@ -309,6 +309,8 @@ export function Workspace({ initialUrl, initialPersona, onClose }: Props) {
                 }}
               />
             </div>
+          </>
+        )}
       </main>
     </div>
   );
