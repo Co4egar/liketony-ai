@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { RewriteResult } from "@/types/rewrite";
 import { enhancePreviewHtml } from "@/lib/preview-html";
 import { usePersonaUsage } from "@/hooks/usePersonaUsage";
+import { getPersonaStages } from "@/lib/persona-stages";
 import { TrendingUp } from "lucide-react";
 
 interface Props {
@@ -27,7 +28,7 @@ interface Props {
   onClose: () => void;
 }
 
-const STAGES = [
+const FALLBACK_STAGES = [
   "Fetching site",
   "Extracting copy",
   "Rewriting in voice",
