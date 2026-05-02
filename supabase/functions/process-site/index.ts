@@ -22,7 +22,7 @@ interface RequestBody {
   };
 }
 
-const MAX_HTML_BYTES = 1_500_000; // 1.5MB safety cap
+const MAX_HTML_BYTES = 8_000_000; // 8MB safety cap
 const FIRECRAWL_URL = "https://api.firecrawl.dev/v2/scrape";
 
 async function scrape(url: string): Promise<string> {
