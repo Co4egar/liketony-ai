@@ -183,6 +183,7 @@ export function constrainRewritesForLayout(
     if (/\s/.test(ch)) return sum + 0.45;
     if (/[ilI1|'`.,:;!]/.test(ch)) return sum + 0.45;
     if (/[mwMW@#%&А-Я]/.test(ch)) return sum + 1.25;
+    if (/[А-Яа-я]/.test(ch)) return sum + 1.1;
     return sum + 1;
   }, 0);
   const clampToBudget = (value: string, maxChars: number, maxWeight: number) => {
@@ -205,7 +206,7 @@ export function constrainRewritesForLayout(
     // Hard layout preservation: keep the visual footprint close to the
     // original, because scraped builders use fixed-position text boxes.
     const max =
-      seg.kind === "button" ? Math.max(len + 2, Math.ceil(len * 1.08)) :
+      seg.kind === "button" ? len :
       seg.kind === "title" ? Math.max(len + 6, Math.ceil(len * 1.12)) :
       seg.kind === "meta-description" ? Math.max(len + 12, Math.ceil(len * 1.18)) :
       seg.kind === "alt" || seg.kind === "aria-label" ? Math.max(len + 4, Math.ceil(len * 1.1)) :
@@ -215,7 +216,8 @@ export function constrainRewritesForLayout(
       len <= 140 ? Math.max(len + 10, Math.ceil(len * 1.15)) :
       Math.max(len + 24, Math.ceil(len * 1.18));
     const maxWeight = visualWeight(original) * (
-      len <= 12 || seg.kind === "button" ? 1.02 :
+      seg.kind === "button" ? 0.92 :
+      len <= 12 ? 1.02 :
       len <= 60 ? 1.08 :
       1.14
     );
