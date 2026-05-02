@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       custom_personas: {
         Row: {
+          canonical_name: string | null
           category: string
           created_at: string
           id: string
@@ -24,8 +25,10 @@ export type Database = {
           signature_phrases: Json
           slug: string
           voice_prompt: string
+          wiki_title: string | null
         }
         Insert: {
+          canonical_name?: string | null
           category?: string
           created_at?: string
           id?: string
@@ -34,8 +37,10 @@ export type Database = {
           signature_phrases?: Json
           slug: string
           voice_prompt: string
+          wiki_title?: string | null
         }
         Update: {
+          canonical_name?: string | null
           category?: string
           created_at?: string
           id?: string
@@ -44,6 +49,7 @@ export type Database = {
           signature_phrases?: Json
           slug?: string
           voice_prompt?: string
+          wiki_title?: string | null
         }
         Relationships: []
       }

@@ -29,7 +29,7 @@ function hashIdx(s: string, mod: number) {
 }
 
 interface Props extends React.HTMLAttributes<HTMLDivElement> {
-  persona: Pick<Persona, "id" | "name">;
+  persona: Pick<Persona, "id" | "name"> & { wikiTitle?: string | null };
   size?: "sm" | "md" | "lg";
 }
 
@@ -46,14 +46,14 @@ export const PersonaAvatar = forwardRef<HTMLDivElement, Props>(
       let cancelled = false;
       setPhoto(null);
       setLoaded(false);
-      fetchPersonaPhoto(persona.id, persona.name).then((url) => {
+      fetchPersonaPhoto(persona.id, persona.name, persona.wikiTitle).then((url) => {
         if (cancelled) return;
         setPhoto(url);
       });
       return () => {
         cancelled = true;
       };
-    }, [persona.id, persona.name]);
+    }, [persona.id, persona.name, persona.wikiTitle]);
 
     return (
       <div

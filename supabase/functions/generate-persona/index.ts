@@ -51,10 +51,14 @@ Deno.serve(async (req) => {
           },
           {
             role: "user",
-            content: `Person: ${cleanName}
+            content: `User typed: "${cleanName}"
+
+This may be a nickname, alias, title, or fictional-character reference (e.g. "Godfather" → Vito Corleone, "The Rock" → Dwayne Johnson, "Voldemort" → fictional).
 
 Return STRICT JSON with this shape:
 {
+  "canonicalName": "The proper full name (e.g. 'Vito Corleone' for 'Godfather'). If the input is already a proper name, repeat it.",
+  "wikiTitle": "The exact English Wikipedia article title for this person/character, with underscores instead of spaces (e.g. 'Vito_Corleone', 'Dwayne_Johnson', 'Lord_Voldemort'). Use the article about the PERSON or CHARACTER, never about a movie/book/album. If unsure, return empty string.",
   "shortBio": "1 short sentence describing who they are (max 90 chars)",
   "voicePrompt": "A 3-5 sentence brief for a copywriter capturing their voice: tone, sentence rhythm, vocabulary quirks, signature moves, what they avoid",
   "signaturePhrases": ["3-5 short signature phrases or verbal tics"]
@@ -72,9 +76,14 @@ Return STRICT JSON with this shape:
     const data = await resp.json();
     const profile = JSON.parse(data?.choices?.[0]?.message?.content ?? "{}");
 
+    const canonicalName = String(profile.canonicalName ?? "").trim().slice(0, 120) || cleanName;
+    const wikiTitle = String(profile.wikiTitle ?? "").trim().slice(0, 200);
+
     const insertRow = {
       slug,
-      name: cleanName,
+      name: canonicalName,
+      canonical_name: canonicalName,
+      wiki_title: wikiTitle || null,
       category: "custom",
       short_bio: String(profile.shortBio ?? "").slice(0, 200),
       voice_prompt: String(profile.voicePrompt ?? ""),
@@ -100,11 +109,12 @@ Return STRICT JSON with this shape:
 function toPersona(row: any) {
   return {
     id: row.slug,
-    name: row.name,
+    name: row.canonical_name ?? row.name,
     category: "custom",
     shortBio: row.short_bio,
     voicePrompt: row.voice_prompt,
     signaturePhrases: row.signature_phrases ?? [],
+    wikiTitle: row.wiki_title ?? null,
   };
 }
 
