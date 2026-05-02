@@ -155,10 +155,10 @@ export function applyRewrites(
     // Escape for HTML attribute contexts vs text contexts.
     const safe =
       seg.kind === "text" || seg.kind === "button"
-        ? replacement
+        ? `<!--LTORIG:${encodeURIComponent(seg.text)}-->${replacement
             .replaceAll("&", "&amp;")
             .replaceAll("<", "&lt;")
-            .replaceAll(">", "&gt;")
+            .replaceAll(">", "&gt;")}<!--/LTORIG-->`
         : replacement.replaceAll('"', "&quot;").replaceAll("'", "&#39;");
     out = out.split(placeholder(seg.id)).join(safe);
   }
@@ -179,6 +179,21 @@ export function constrainRewritesForLayout(
   rewritten: Record<number, string>,
 ): Record<number, string> {
   const safe: Record<number, string> = {};
+  const visualWeight = (s: string) => Array.from(s).reduce((sum, ch) => {
+    if (/\s/.test(ch)) return sum + 0.45;
+    if (/[ilI1|'`.,:;!]/.test(ch)) return sum + 0.45;
+    if (/[mwMW@#%&А-Я]/.test(ch)) return sum + 1.25;
+    return sum + 1;
+  }, 0);
+  const clampToBudget = (value: string, maxChars: number, maxWeight: number) => {
+    let out = "";
+    for (const ch of Array.from(value)) {
+      const next = `${out}${ch}`;
+      if (Array.from(next).length > maxChars || visualWeight(next) > maxWeight) break;
+      out = next;
+    }
+    return out.replace(/[\s,;:—-]+$/g, "").trim();
+  };
   for (const seg of segments) {
     const value = rewritten[seg.id];
     if (typeof value !== "string") continue;
@@ -187,28 +202,25 @@ export function constrainRewritesForLayout(
 
     const original = seg.text.replace(/\s+/g, " ").trim();
     const len = Array.from(original).length;
-    // Layout-safe length caps. Visual builders (Tilda, Webflow) position text
-    // in fixed-size boxes, so over-expanding short labels breaks the page.
-    // Rule of thumb: the SHORTER the original, the TIGHTER we keep it. Long
-    // paragraphs can grow more because they live in flow layouts.
-    //   - nav/menu links and tiny labels: basically same length
-    //   - buttons: very tight
-    //   - short headlines (≤20 chars): up to ~1.4x — character via word choice
-    //   - medium headlines: up to ~1.5x
-    //   - paragraphs: up to ~1.6x
+    // Hard layout preservation: keep the visual footprint close to the
+    // original, because scraped builders use fixed-position text boxes.
     const max =
-      seg.kind === "button" ? Math.max(len + 6, Math.ceil(len * 1.25)) :
-      seg.kind === "title" ? Math.max(len + 20, Math.ceil(len * 1.5)) :
-      seg.kind === "meta-description" ? Math.max(len + 30, Math.ceil(len * 1.4)) :
-      seg.kind === "alt" || seg.kind === "aria-label" ? Math.max(len + 8, Math.ceil(len * 1.3)) :
-      // "text" — headlines, paragraphs, body.
-      len <= 12 ? Math.max(len + 4, Math.ceil(len * 1.5)) :   // nav links, tiny labels
-      len <= 25 ? Math.max(len + 8, Math.ceil(len * 1.4)) :   // short headlines / chips
-      len <= 60 ? Math.max(len + 16, Math.ceil(len * 1.45)) : // headlines
-      len <= 140 ? Math.max(len + 30, Math.ceil(len * 1.5)) : // sub-headlines
-      Math.max(len + 60, Math.ceil(len * 1.6));               // paragraphs
+      seg.kind === "button" ? Math.max(len + 2, Math.ceil(len * 1.08)) :
+      seg.kind === "title" ? Math.max(len + 6, Math.ceil(len * 1.12)) :
+      seg.kind === "meta-description" ? Math.max(len + 12, Math.ceil(len * 1.18)) :
+      seg.kind === "alt" || seg.kind === "aria-label" ? Math.max(len + 4, Math.ceil(len * 1.1)) :
+      len <= 12 ? len :
+      len <= 25 ? Math.max(len + 2, Math.ceil(len * 1.08)) :
+      len <= 60 ? Math.max(len + 4, Math.ceil(len * 1.1)) :
+      len <= 140 ? Math.max(len + 10, Math.ceil(len * 1.15)) :
+      Math.max(len + 24, Math.ceil(len * 1.18));
+    const maxWeight = visualWeight(original) * (
+      len <= 12 || seg.kind === "button" ? 1.02 :
+      len <= 60 ? 1.08 :
+      1.14
+    );
 
-    safe[seg.id] = Array.from(compact).length <= max ? compact : compact.slice(0, max).trim();
+    safe[seg.id] = clampToBudget(compact, max, maxWeight) || original;
   }
   return safe;
 }
@@ -272,76 +284,28 @@ img[data-original]{visibility:visible!important;opacity:1!important;}
 </style><script id="liketony-text-fit">
 (function(){
   function each(list,fn){Array.prototype.forEach.call(list,fn);}
-  function activeField(elem,name){
-    var base=elem.getAttribute('data-field-'+name+'-value')||'';
-    var w=window.innerWidth||document.documentElement.clientWidth;
-    var bps=[320,360,480,640,960];
-    for(var i=0;i<bps.length;i++){
-      if(w<=bps[i]){
-        var v=elem.getAttribute('data-field-'+name+'-res-'+bps[i]+'-value');
-        if(v!==null&&v!=='') return v;
-      }
-    }
-    return base;
-  }
   function normalizeTildaRuntime(){
     each(document.querySelectorAll('.t396__elem[style]'),function(el){
       ['top','left','right','bottom','width','height','transform','transition','transition-duration'].forEach(function(prop){el.style.removeProperty(prop);});
       if(!el.getAttribute('style')) el.removeAttribute('style');
     });
   }
-  function getBaseFont(atom){
-    var stored=parseFloat(atom.getAttribute('data-ps-base-font')||'');
-    if(stored) return stored;
-    var css=getComputedStyle(atom);
-    var base=parseFloat(css.fontSize)||16;
-    atom.setAttribute('data-ps-base-font',String(base));
-    return base;
-  }
-  function measureScale(atom){
-    var elem=atom.closest('.t396__elem')||atom.parentElement;
-    if(!elem) return 1;
-    var fontSize=getBaseFont(atom);
-    atom.style.fontSize=fontSize+'px';
-    atom.removeAttribute('data-ps-fit-font');
-    var fit=activeField(elem,'textfit');
-    var isAutoWidth=/^autowidth$/i.test(fit);
-    if(isAutoWidth){
-      atom.style.textAlign=getComputedStyle(elem).textAlign||'center';
-      atom.style.whiteSpace='nowrap';
-      var declaredW=parseFloat(activeField(elem,'width'))||elem.clientWidth||atom.scrollWidth;
-      if(!declaredW||atom.scrollWidth<=declaredW+1) return 1;
-      return Math.max(0.72,Math.min(1,declaredW/(atom.scrollWidth+1)));
-    }
-    var maxW=elem.clientWidth;
-    var maxH=elem.clientHeight;
-    if(!maxW||!maxH) return 1;
-    if(atom.scrollWidth<=maxW+1 && atom.scrollHeight<=maxH+1) return 1;
-    var wScale=maxW/(atom.scrollWidth+1);
-    var hScale=maxH/(atom.scrollHeight+1);
-    return Math.max(0.72,Math.min(1,wScale,hScale));
-  }
   function fitText(){
     normalizeTildaRuntime();
-    var groups={};
     each(document.querySelectorAll('.t396__elem[data-elem-type="text"] .tn-atom,.t396__elem[data-elem-type="button"] .tn-atom'),function(atom){
+      atom.style.removeProperty('font-size');
+      atom.removeAttribute('data-ps-fit-font');
       var elem=atom.closest('.t396__elem')||atom.parentElement;
-      var art=atom.closest('.t396__artboard')||document.body;
-      var type=elem ? (elem.getAttribute('data-elem-type')||'text') : 'text';
-      var base=getBaseFont(atom);
-      var key=(art.id||art.getAttribute('data-artboard-recid')||'page')+'|'+type+'|'+Math.round(base);
-      if(!groups[key]) groups[key]={scale:1,atoms:[]};
-      groups[key].atoms.push(atom);
-      groups[key].scale=Math.min(groups[key].scale,measureScale(atom));
-    });
-    Object.keys(groups).forEach(function(key){
-      var group=groups[key];
-      group.atoms.forEach(function(atom){
-        var base=getBaseFont(atom);
-        atom.style.fontSize=(base*group.scale)+'px';
-        if(group.scale<0.999) atom.setAttribute('data-ps-fit-font','group');
-        else atom.removeAttribute('data-ps-fit-font');
-      });
+      if(!elem||atom.getAttribute('data-lt-checked')==='1') return;
+      atom.setAttribute('data-lt-checked','1');
+      var maxW=elem.clientWidth;
+      var maxH=elem.clientHeight;
+      if(!maxW||!maxH) return;
+      if(atom.scrollWidth<=maxW+1 && atom.scrollHeight<=maxH+1) return;
+      var html=atom.innerHTML;
+      var m=html.match(/<!--LTORIG:([^]*?)-->([^]*?)<!--\/LTORIG-->/);
+      if(!m) return;
+      try{ atom.textContent=decodeURIComponent(m[1]); }catch(e){}
     });
   }
   document.addEventListener('DOMContentLoaded',fitText);
