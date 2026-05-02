@@ -170,6 +170,8 @@ ${JSON.stringify(segments.map(s => {
         { role: "system", content: system },
         { role: "user", content: user },
       ],
+      temperature: 1.3,
+      top_p: 0.95,
       response_format: { type: "json_object" },
     }),
   });
