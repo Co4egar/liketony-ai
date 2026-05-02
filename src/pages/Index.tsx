@@ -71,8 +71,12 @@ const Index = () => {
             <em className="italic font-normal text-coral">leaving money</em>{" "}
             on the table.
           </h1>
+          <p className="mt-4 text-lg sm:text-xl text-muted-foreground max-w-2xl leading-snug">
+            Drop your URL. Pick a voice your customer already trusts.{" "}
+            <span className="text-foreground font-medium">We rewrite the whole page in 60 seconds</span> — Hormozi, Jobs, Hemingway, whoever sells.
+          </p>
 
-          <div className="mt-6 grid lg:grid-cols-[1fr_auto] gap-4 items-stretch">
+          <div className="mt-6 grid lg:grid-cols-[1fr_360px] gap-4 items-stretch">
             <div className="space-y-2">
               <DomainBar defaultUrl={url} onSubmit={handleGo} ctaLabel="Rewrite it" />
               <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-muted-foreground">
@@ -82,19 +86,28 @@ const Index = () => {
               </div>
             </div>
 
-            <div className="flex items-center gap-3 rounded-xl border border-border bg-card/60 px-4 py-3 min-w-0 lg:min-w-[280px]">
-              <PersonaAvatar persona={persona} size="lg" />
-              <div className="min-w-0">
-                <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-                  Voice selected
-                </div>
-                <div className="font-display font-semibold text-lg leading-tight truncate">
-                  {persona.name}
-                </div>
-                <div className="text-xs text-muted-foreground truncate italic">
-                  {persona.shortBio}
+            <div className="relative rounded-xl border border-border bg-card/60 px-4 py-3 shadow-warm">
+              <div className="flex items-center gap-3">
+                <PersonaAvatar persona={persona} size="lg" />
+                <div className="min-w-0 flex-1">
+                  <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                    Voice selected
+                  </div>
+                  <div className="font-display font-semibold text-lg leading-tight truncate">
+                    {persona.name}
+                  </div>
+                  <div className="text-[11px] text-muted-foreground truncate">
+                    {persona.shortBio}
+                  </div>
                 </div>
               </div>
+              {persona.signaturePhrases?.[0] && (
+                <blockquote className="mt-3 pt-3 border-t border-border/60 text-sm italic text-foreground leading-snug">
+                  <span className="text-coral font-display text-lg leading-none mr-1">“</span>
+                  {persona.signaturePhrases[0]}
+                  <span className="text-coral font-display text-lg leading-none ml-0.5">”</span>
+                </blockquote>
+              )}
             </div>
           </div>
         </section>
