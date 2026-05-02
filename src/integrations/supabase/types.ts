@@ -16,38 +16,62 @@ export type Database = {
     Tables: {
       custom_personas: {
         Row: {
+          accent: string | null
           canonical_name: string | null
           category: string
           created_at: string
+          examples: Json
           id: string
           name: string
+          rhythm: string | null
           short_bio: string
+          signature_moves: string | null
           signature_phrases: Json
           slug: string
+          taboos: string | null
+          tone: string | null
+          verbal_tics: string | null
+          vocabulary: string | null
           voice_prompt: string
           wiki_title: string | null
         }
         Insert: {
+          accent?: string | null
           canonical_name?: string | null
           category?: string
           created_at?: string
+          examples?: Json
           id?: string
           name: string
+          rhythm?: string | null
           short_bio: string
+          signature_moves?: string | null
           signature_phrases?: Json
           slug: string
+          taboos?: string | null
+          tone?: string | null
+          verbal_tics?: string | null
+          vocabulary?: string | null
           voice_prompt: string
           wiki_title?: string | null
         }
         Update: {
+          accent?: string | null
           canonical_name?: string | null
           category?: string
           created_at?: string
+          examples?: Json
           id?: string
           name?: string
+          rhythm?: string | null
           short_bio?: string
+          signature_moves?: string | null
           signature_phrases?: Json
           slug?: string
+          taboos?: string | null
+          tone?: string | null
+          verbal_tics?: string | null
+          vocabulary?: string | null
           voice_prompt?: string
           wiki_title?: string | null
         }

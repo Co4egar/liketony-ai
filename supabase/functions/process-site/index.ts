@@ -11,6 +11,12 @@ import {
   type Segment,
 } from "../_shared/landing.ts";
 
+interface PersonaExample {
+  kind: string;
+  before: string;
+  after: string;
+}
+
 interface RequestBody {
   url: string;
   intensity?: number; // 0 = chill, 100 = aggressive sales
@@ -19,6 +25,14 @@ interface RequestBody {
     name: string;
     voicePrompt: string;
     signaturePhrases?: string[];
+    tone?: string;
+    rhythm?: string;
+    vocabulary?: string;
+    signatureMoves?: string;
+    taboos?: string;
+    accent?: string;
+    verbalTics?: string;
+    examples?: PersonaExample[];
   };
 }
 
@@ -82,22 +96,45 @@ async function rewriteSegments(
     clamp <= 90 ? "aggressive direct-response — urgency, benefit-stacking, power words" :
                   "maximum aggressive sales — Hormozi-grade conversion copy, urgency, scarcity, bold promises";
 
-  const system = `You are a copywriter rewriting landing page text in the unmistakable voice of ${persona.name}.
+  const p = persona;
+  const sectionIf = (label: string, val?: string) =>
+    val && val.trim() ? `${label}:\n${val.trim()}\n` : "";
 
-VOICE BRIEF:
-${persona.voicePrompt}
-${persona.signaturePhrases?.length ? `Signature phrases (use sparingly, max 1-2 across the whole page): ${persona.signaturePhrases.join(" | ")}` : ""}
+  const examplesBlock = p.examples?.length
+    ? `\nBEFORE / AFTER EXAMPLES (anchor your style on these):\n${p.examples
+        .map(
+          (e, i) =>
+            `${i + 1}. [${e.kind}]\n   BEFORE: ${e.before}\n   AFTER (${p.name}): ${e.after}`,
+        )
+        .join("\n")}\n`
+    : "";
 
-TONE INTENSITY: ${clamp}/100 — ${toneLabel}.
-Apply this dial consistently across every segment: lower = softer, higher = more sales-driven and direct.
+  const system = `You are NOT writing as a generic copywriter. You ARE ${p.name}.
+Write every word as ${p.name} would write it. Caricature level: 4 out of 5 — unmistakably this character, almost parody, but not so over-the-top it becomes unreadable.
 
-ABSOLUTE RULES:
-1. Preserve the original meaning, claims, and any concrete numbers, prices, names, product features, or URLs. Do NOT invent facts.
-2. Keep each rewritten segment within the original layout space. Headlines, cards, buttons, and menu items must stay almost the same length as the original (never more than +10–15%). Longer paragraphs may be up to +20%.
-3. Match the original language. If the source is in Russian, respond in Russian. If English, English. Etc.
-4. Never include HTML tags. Never include the placeholder tokens.
-5. Short navigation labels, button text, and single words should stay short and snappy.
-6. Output STRICT JSON: { "rewrites": { "<id>": "<new text>", ... } } with one entry per input id.`;
+=== VOICE PROFILE: ${p.name} ===
+
+SUMMARY:
+${p.voicePrompt}
+
+${sectionIf("TONE", p.tone)}${sectionIf("RHYTHM", p.rhythm)}${sectionIf("VOCABULARY", p.vocabulary)}${sectionIf("SIGNATURE MOVES", p.signatureMoves)}${sectionIf("ACCENT (render phonetically in spelling)", p.accent)}${sectionIf("VERBAL TICS (sprinkle through, not in every line)", p.verbalTics)}${sectionIf("TABOOS — never do these", p.taboos)}${
+    p.signaturePhrases?.length
+      ? `SIGNATURE PHRASES (work 2-4 of these into the page where they fit naturally; do not stuff every segment):\n- ${p.signaturePhrases.join("\n- ")}\n`
+      : ""
+  }${examplesBlock}
+
+TONE INTENSITY DIAL: ${clamp}/100 — ${toneLabel}.
+Apply consistently across every segment: lower = softer, higher = more sales-driven and direct. The character voice stays at caricature 4/5 regardless of dial.
+
+ABSOLUTE RULES (these override voice):
+1. Preserve original meaning, claims, numbers, prices, names, product features, and URLs. Do NOT invent facts. You may dramatize HOW it's said, never WHAT is true.
+2. Keep each rewritten segment within the original layout. Headlines, cards, buttons, nav items: stay within +10–15% of original length. Paragraphs: up to +20%.
+3. Match the original language (Russian → Russian, English → English, etc.). Even when matching language, KEEP the character's accent quirks and tics translated/adapted into that language so the persona is still unmistakable.
+4. Distribute signature phrases, tics, and accent markers across the page — do NOT pile them into one segment. Short nav labels and buttons stay short and snappy; save the full character voice for headlines and paragraphs.
+5. Never output HTML tags or placeholder tokens.
+6. Output STRICT JSON: { "rewrites": { "<id>": "<new text>", ... } } with one entry per input id.
+
+If the segment is a 1-2 word nav label or button, render it as ${p.name} would say that exact action — short, in-character, no extra words.`;
 
   const user = `Rewrite each of these segments. They come from one landing page; treat them as a coherent whole.
 
