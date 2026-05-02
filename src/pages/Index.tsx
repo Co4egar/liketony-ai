@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Check, Quote } from "lucide-react";
+import { Check } from "lucide-react";
 import { Link } from "react-router-dom";
 import { DomainBar } from "@/components/DomainBar";
 import { PersonaCatalog } from "@/components/PersonaCatalog";
 import { PersonaAvatar } from "@/components/PersonaAvatar";
 import { Workspace } from "@/components/Workspace";
-import { Persona, PERSONAS_BY_ID, PERSONAS } from "@/data/personas";
+import { Persona, PERSONAS_BY_ID } from "@/data/personas";
 import { toast } from "sonner";
 
 const DEFAULT_PERSONA_ID = "hormozi";
@@ -60,84 +60,46 @@ const Index = () => {
       </header>
 
       <main className="relative">
-        <section id="start" className="px-6 sm:px-10 pt-20 pb-24 max-w-6xl mx-auto">
-          <div className="grid lg:grid-cols-12 gap-12 items-start">
-            <div className="lg:col-span-7 space-y-8 animate-fade-in">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-card/40 text-xs font-mono uppercase tracking-wider text-muted-foreground">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                Landing-page rewriter · live in 60 sec
-              </div>
+        <section id="start" className="px-6 sm:px-10 pt-8 pb-6 max-w-6xl mx-auto">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-card/40 text-xs font-mono uppercase tracking-wider text-muted-foreground mb-5">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+            Landing-page rewriter · live in 60 sec
+          </div>
 
-              <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl font-medium leading-[0.98] tracking-[-0.03em]">
-                Your landing page is{" "}
-                <em className="italic font-normal text-coral">leaving money</em>{" "}
-                on the table.
-              </h1>
+          <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-medium leading-[1.0] tracking-[-0.03em] max-w-4xl">
+            Your landing page is{" "}
+            <em className="italic font-normal text-coral">leaving money</em>{" "}
+            on the table.
+          </h1>
 
-              <p className="text-lg sm:text-xl text-muted-foreground max-w-xl leading-relaxed">
-                Look — most landing pages don't have a copy problem. They have a{" "}
-                <span className="text-foreground font-medium">voice</span> problem.
-                Boring voice, boring conversions. Drop your URL. Pick a voice that
-                actually sells. Watch your page rewrite itself in 60 seconds. That's it.
-              </p>
-
-              <div className="space-y-3">
-                <DomainBar defaultUrl={url} onSubmit={handleGo} ctaLabel="Rewrite it" />
-                <p className="text-xs text-muted-foreground font-mono">
-                  Selected voice:{" "}
-                  <span className="text-foreground">{persona.name}</span> ·{" "}
-                  <span className="italic">{persona.shortBio}</span> ·{" "}
-                  <a href="#voices" className="text-primary hover:underline">
-                    swap →
-                  </a>
-                </p>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-2 text-sm text-muted-foreground">
-                <span className="inline-flex items-center gap-1.5"><Check className="w-4 h-4 text-primary" /> No signup</span>
-                <span className="inline-flex items-center gap-1.5"><Check className="w-4 h-4 text-primary" /> Download HTML</span>
-                <span className="inline-flex items-center gap-1.5"><Check className="w-4 h-4 text-primary" /> Free to try</span>
+          <div className="mt-6 grid lg:grid-cols-[1fr_auto] gap-4 items-stretch">
+            <div className="space-y-2">
+              <DomainBar defaultUrl={url} onSubmit={handleGo} ctaLabel="Rewrite it" />
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-muted-foreground">
+                <span className="inline-flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-primary" /> No signup</span>
+                <span className="inline-flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-primary" /> Download HTML</span>
+                <span className="inline-flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-primary" /> Free to try</span>
               </div>
             </div>
 
-            <aside className="lg:col-span-5 lg:sticky lg:top-8 animate-fade-in">
-              <div className="relative rounded-xl border border-border bg-card/60 backdrop-blur p-7 shadow-card grain overflow-hidden">
-                <Quote className="w-6 h-6 text-primary mb-4" />
-                <p className="font-display text-2xl leading-snug text-foreground">
-                  "If your copy doesn't make the reader feel something in the first
-                  five seconds, you don't have copy. You have{" "}
-                  <em className="text-coral">decoration</em>."
-                </p>
-                <div className="mt-6 flex items-center gap-3 pt-5 border-t border-border/60">
-                  <PersonaAvatar persona={PERSONAS_BY_ID["hormozi"]} size="md" />
-                  <div>
-                    <div className="font-display font-semibold text-sm">Alex Hormozi</div>
-                    <div className="text-xs text-muted-foreground font-mono">$100M Offers · Acquisition.com</div>
-                  </div>
+            <div className="flex items-center gap-3 rounded-xl border border-border bg-card/60 px-4 py-3 min-w-0 lg:min-w-[280px]">
+              <PersonaAvatar persona={persona} size="lg" />
+              <div className="min-w-0">
+                <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                  Voice selected
+                </div>
+                <div className="font-display font-semibold text-lg leading-tight truncate">
+                  {persona.name}
+                </div>
+                <div className="text-xs text-muted-foreground truncate italic">
+                  {persona.shortBio}
                 </div>
               </div>
-
-              <div className="mt-4 flex items-center justify-between text-xs font-mono uppercase tracking-wider text-muted-foreground px-1">
-                <span>Default voice today</span>
-                <span className="text-foreground">Change anytime ↓</span>
-              </div>
-            </aside>
+            </div>
           </div>
         </section>
 
-        <section id="voices" className="px-6 sm:px-10 py-20 max-w-6xl mx-auto">
-          <div className="mb-10 max-w-3xl">
-            <div className="text-xs font-mono uppercase tracking-wider text-primary mb-3">
-              The whole roster
-            </div>
-            <h2 className="font-display text-3xl sm:text-4xl font-medium leading-tight">
-              {PERSONAS.length}+ voices, organized.{" "}
-              <em className="italic text-coral">Or just type a name.</em>
-            </h2>
-            <p className="text-muted-foreground mt-3">
-              Don't see who you want? Type any name and we'll generate a voice profile on the fly.
-            </p>
-          </div>
+        <section id="voices" className="px-6 sm:px-10 pt-2 pb-16 max-w-6xl mx-auto">
           <PersonaCatalog selectedId={persona?.id} onSelect={setPersona} />
         </section>
 
