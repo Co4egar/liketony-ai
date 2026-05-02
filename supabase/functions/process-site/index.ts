@@ -128,19 +128,35 @@ Apply consistently across every segment: lower = softer, higher = more sales-dri
 
 ABSOLUTE RULES (these override voice):
 1. Preserve original meaning, claims, numbers, prices, names, product features, and URLs. Do NOT invent facts. You may dramatize HOW it's said, never WHAT is true.
-2. The character voice is the WHOLE POINT — do not water it down. Headlines and paragraphs MUST sound dramatically different from the original. If the original is "Achieve Peak Performance" and you're Bugs Bunny, output "Eh, wanna reach yer peak, doc? Or just stand around lookin' like a sap?" — not a polite tweak. Buttons stay short (1-5 words) but still in-character ("Click Here" → "Eh, click it, doc").
-3. Length budget: titles can grow up to ~2x, paragraphs up to ~1.8x, buttons stay roughly the same length. Don't pad — make it sing.
+2. The character voice is the WHOLE POINT — do not water it down. Channel the persona through WORD CHOICE, accent spelling, and tics — not through inflating length. A 3-word headline stays a 3-word headline, just spoken in-character. Example: "Get Started" by Bugs Bunny → "Let's Go, Doc!" (still 3 words). "Achieve Peak Performance" → "Reach Yer Peak, Doc" — same beat count.
+3. LENGTH IS A HARD CONSTRAINT — break it and the layout breaks. Each segment carries a "maxChars" budget. Your output for that id MUST be ≤ maxChars characters. Stay close to the original character count: nav/buttons within ±20%, headlines within ±30%, paragraphs within ±40%. Cut filler before exceeding the budget. If you can't fit the persona in the budget, pick the most in-character single word/phrase rather than padding.
 4. Match the original language (Russian → Russian, English → English). Even when matching language, KEEP the character's accent quirks and tics adapted into that language so the persona is unmistakable.
-5. Every rewritten headline/paragraph must contain at least ONE clear character marker (accent spelling, tic, signature move, or signature phrase). No segment should sound generic. Distribute markers across the page — do NOT pile them all into one segment.
-6. Never output HTML tags or placeholder tokens.
+5. Every rewritten headline/paragraph must contain at least ONE clear character marker (accent spelling, tic, signature move, or signature phrase). For very short segments (≤4 words / nav / buttons), one well-chosen in-character word is enough — do NOT cram a full catchphrase into a button. Distribute markers across the page.
+6. Never output HTML tags or placeholder tokens. No emojis unless the original had them.
 7. Output STRICT JSON: { "rewrites": { "<id>": "<new text>", ... } } with one entry per input id.
 
-If the segment is a 1-2 word nav label or button, render it as ${p.name} would say that exact action — short, in-character, no extra words.`;
+If the segment is a 1-2 word nav label or button, render it as ${p.name} would say that exact action — short, in-character, no extra words, ≤ maxChars.`;
 
-  const user = `Rewrite each of these segments. They come from one landing page; treat them as a coherent whole.
+  // Per-segment length budget the LLM must respect — mirrors constrainRewritesForLayout.
+  const budgetFor = (kind: Segment["kind"], len: number): number => {
+    if (kind === "button") return Math.max(len + 6, Math.ceil(len * 1.25));
+    if (kind === "title") return Math.max(len + 20, Math.ceil(len * 1.5));
+    if (kind === "meta-description") return Math.max(len + 30, Math.ceil(len * 1.4));
+    if (kind === "alt" || kind === "aria-label") return Math.max(len + 8, Math.ceil(len * 1.3));
+    if (len <= 12) return Math.max(len + 4, Math.ceil(len * 1.5));
+    if (len <= 25) return Math.max(len + 8, Math.ceil(len * 1.4));
+    if (len <= 60) return Math.max(len + 16, Math.ceil(len * 1.45));
+    if (len <= 140) return Math.max(len + 30, Math.ceil(len * 1.5));
+    return Math.max(len + 60, Math.ceil(len * 1.6));
+  };
+
+  const user = `Rewrite each of these segments. They come from one landing page; treat them as a coherent whole. Respect the maxChars budget for every id — going over breaks the page layout.
 
 Segments (JSON):
-${JSON.stringify(segments.map(s => ({ id: s.id, kind: s.kind, text: s.text })))}`;
+${JSON.stringify(segments.map(s => {
+  const len = Array.from(s.text.replace(/\s+/g, " ").trim()).length;
+  return { id: s.id, kind: s.kind, originalChars: len, maxChars: budgetFor(s.kind, len), text: s.text };
+}))}`;
 
   const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
