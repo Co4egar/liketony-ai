@@ -187,19 +187,26 @@ export function constrainRewritesForLayout(
 
     const original = seg.text.replace(/\s+/g, " ").trim();
     const len = Array.from(original).length;
-    // Generous length cap — the whole point of this product is the persona
-    // voice taking over. We accept some layout breakage in exchange for the
-    // character actually coming through. Buttons/nav still stay tight so
-    // they don't blow up CSS grids, but headlines and paragraphs can stretch.
+    // Layout-safe length caps. Visual builders (Tilda, Webflow) position text
+    // in fixed-size boxes, so over-expanding short labels breaks the page.
+    // Rule of thumb: the SHORTER the original, the TIGHTER we keep it. Long
+    // paragraphs can grow more because they live in flow layouts.
+    //   - nav/menu links and tiny labels: basically same length
+    //   - buttons: very tight
+    //   - short headlines (≤20 chars): up to ~1.4x — character via word choice
+    //   - medium headlines: up to ~1.5x
+    //   - paragraphs: up to ~1.6x
     const max =
-      seg.kind === "button" ? Math.max(len + 10, Math.ceil(len * 1.6)) :
-      seg.kind === "title" ? Math.max(len + 30, Math.ceil(len * 1.8)) :
-      seg.kind === "meta-description" ? Math.max(len + 40, Math.ceil(len * 1.6)) :
-      seg.kind === "alt" || seg.kind === "aria-label" ? Math.max(len + 12, Math.ceil(len * 1.5)) :
-      // "text" — headlines, paragraphs, body. Generous so persona shines.
-      len <= 30 ? Math.max(len + 30, Math.ceil(len * 2.5)) :
-      len <= 90 ? Math.max(len + 60, Math.ceil(len * 2.0)) :
-      Math.max(len + 100, Math.ceil(len * 1.7));
+      seg.kind === "button" ? Math.max(len + 6, Math.ceil(len * 1.25)) :
+      seg.kind === "title" ? Math.max(len + 20, Math.ceil(len * 1.5)) :
+      seg.kind === "meta-description" ? Math.max(len + 30, Math.ceil(len * 1.4)) :
+      seg.kind === "alt" || seg.kind === "aria-label" ? Math.max(len + 8, Math.ceil(len * 1.3)) :
+      // "text" — headlines, paragraphs, body.
+      len <= 12 ? Math.max(len + 4, Math.ceil(len * 1.5)) :   // nav links, tiny labels
+      len <= 25 ? Math.max(len + 8, Math.ceil(len * 1.4)) :   // short headlines / chips
+      len <= 60 ? Math.max(len + 16, Math.ceil(len * 1.45)) : // headlines
+      len <= 140 ? Math.max(len + 30, Math.ceil(len * 1.5)) : // sub-headlines
+      Math.max(len + 60, Math.ceil(len * 1.6));               // paragraphs
 
     safe[seg.id] = Array.from(compact).length <= max ? compact : compact.slice(0, max).trim();
   }
