@@ -118,6 +118,36 @@ function hydrate() {
 
 const inflight = new Map<string, Promise<string | null>>();
 
+async function fetchSummaryPhoto(slug: string): Promise<string | null> {
+  const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(slug)}?redirect=true`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data?.thumbnail?.source ?? data?.originalimage?.source ?? null;
+  } catch {
+    return null;
+  }
+}
+
+// Fallback: use the Wikipedia search API to find the best matching article
+// when our direct slug guess fails (handles diacritics, initials, disambig).
+async function searchWikipediaPhoto(query: string): Promise<string | null> {
+  try {
+    const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(
+      query,
+    )}&format=json&origin=*&srlimit=1`;
+    const res = await fetch(searchUrl);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const title: string | undefined = data?.query?.search?.[0]?.title;
+    if (!title) return null;
+    return await fetchSummaryPhoto(title.replace(/\s+/g, "_"));
+  } catch {
+    return null;
+  }
+}
+
 export async function fetchPersonaPhoto(personaId: string, name: string): Promise<string | null> {
   hydrate();
   // 1. Hard overrides win.
@@ -129,24 +159,26 @@ export async function fetchPersonaPhoto(personaId: string, name: string): Promis
   if (memCache.has(personaId)) return memCache.get(personaId) ?? null;
   if (inflight.has(personaId)) return inflight.get(personaId)!;
 
-  const slug = WIKI_SLUGS[personaId] ?? name.replace(/\s+/g, "_");
-  const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(slug)}?redirect=true`;
-
   const p = (async () => {
     try {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(String(res.status));
-      const data = await res.json();
-      const photo: string | null =
-        data?.thumbnail?.source ?? data?.originalimage?.source ?? null;
+      // Try mapped slug first, then raw name, then a Wikipedia search.
+      const candidates: string[] = [];
+      if (WIKI_SLUGS[personaId]) candidates.push(WIKI_SLUGS[personaId]);
+      const nameSlug = name.replace(/\s+/g, "_");
+      if (!candidates.includes(nameSlug)) candidates.push(nameSlug);
+
+      let photo: string | null = null;
+      for (const slug of candidates) {
+        photo = await fetchSummaryPhoto(slug);
+        if (photo) break;
+      }
+      if (!photo) photo = await searchWikipediaPhoto(name);
+
       memCache.set(personaId, photo);
       const stored = loadStorage();
       stored[personaId] = photo;
       saveStorage(stored);
       return photo;
-    } catch {
-      memCache.set(personaId, null);
-      return null;
     } finally {
       inflight.delete(personaId);
     }
