@@ -5,7 +5,7 @@ import { DomainBar } from "@/components/DomainBar";
 import { PersonaCatalog } from "@/components/PersonaCatalog";
 import { PersonaAvatar } from "@/components/PersonaAvatar";
 import { Workspace } from "@/components/Workspace";
-import { Persona, PERSONAS_BY_ID, PERSONAS } from "@/data/personas";
+import { Persona, PERSONAS_BY_ID } from "@/data/personas";
 import { toast } from "sonner";
 
 const DEFAULT_PERSONA_ID = "hormozi";
