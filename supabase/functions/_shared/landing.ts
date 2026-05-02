@@ -286,7 +286,7 @@ img[data-original]{visibility:visible!important;opacity:1!important;}
   function each(list,fn){Array.prototype.forEach.call(list,fn);}
   function normalizeTildaRuntime(){
     each(document.querySelectorAll('.t396__elem[style]'),function(el){
-      ['top','left','right','bottom','width','height','transform','transition','transition-duration'].forEach(function(prop){el.style.removeProperty(prop);});
+      ['transform','transition','transition-duration'].forEach(function(prop){el.style.removeProperty(prop);});
       if(!el.getAttribute('style')) el.removeAttribute('style');
     });
   }
