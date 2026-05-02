@@ -244,9 +244,6 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
               <Button onClick={handleDownload} className="w-full justify-start gap-2" variant="secondary">
                 <Download className="w-4 h-4" /> Download HTML
               </Button>
-              <Button onClick={handleShare} variant="secondary" className="w-full justify-start gap-2">
-                <Share2 className="w-4 h-4" /> Copy share link
-              </Button>
               <div className="text-xs text-muted-foreground pt-2">
                 Rewrote {result.rewrittenCount} / {result.segmentCount} segments.
               </div>
