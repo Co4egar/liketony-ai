@@ -277,29 +277,33 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
                 <PersonaAvatar persona={pending!.persona} size="lg" />
                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
               </div>
-              <div className="space-y-1.5 min-w-[260px]">
-                {STAGES.map((s, i) => (
+              <div className="space-y-1.5 min-w-[280px]">
+                {getPersonaStages(pending!.persona).map((s, i) => (
                   <div
-                    key={s}
+                    key={i}
                     className={cn(
                       "flex items-center gap-2 text-sm transition-colors",
                       i < stage ? "text-foreground" : i === stage ? "text-primary" : "text-muted-foreground",
                     )}
                   >
                     {i < stage ? (
-                      <Check className="w-4 h-4 text-primary" />
+                      <Check className="w-4 h-4 text-primary shrink-0" />
                     ) : i === stage ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <Loader2 className="w-4 h-4 animate-spin shrink-0" />
                     ) : (
-                      <div className="w-4 h-4 rounded-full border border-border" />
+                      <div className="w-4 h-4 rounded-full border border-border shrink-0" />
                     )}
-                    {s} {i === stage ? <span className="text-muted-foreground">— {pending!.persona.name}</span> : null}
+                    <span className="leading-snug">{s}</span>
                   </div>
                 ))}
               </div>
+              <div className="text-xs text-muted-foreground">— {pending!.persona.name}</div>
             </div>
           </div>
         )}
+
+        {/* removed FALLBACK_STAGES sentinel */}
+        {false && FALLBACK_STAGES.length}
 
         {error && !loading && (
           <div className="m-auto max-w-md text-center p-6 rounded-xl border border-destructive/40 bg-destructive/10">
