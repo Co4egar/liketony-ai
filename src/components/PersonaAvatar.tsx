@@ -29,7 +29,7 @@ function hashIdx(s: string, mod: number) {
 }
 
 interface Props extends React.HTMLAttributes<HTMLDivElement> {
-  persona: Pick<Persona, "id" | "name">;
+  persona: Pick<Persona, "id" | "name"> & { wikiTitle?: string | null };
   size?: "sm" | "md" | "lg";
 }
 
