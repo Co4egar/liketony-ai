@@ -118,39 +118,83 @@ function hydrate() {
 
 const inflight = new Map<string, Promise<string | null>>();
 
-async function fetchSummaryPhoto(slug: string): Promise<string | null> {
+// Wikipedia "type" / description hints for pages that are NOT a person/character.
+// If a page summary matches these, we treat its thumbnail as a wrong hit
+// (movie poster, album cover, book jacket, etc.) and keep searching.
+const NON_PERSON_HINTS = [
+  "film",
+  "movie",
+  "novel",
+  "book",
+  "album",
+  "song",
+  "video game",
+  "tv series",
+  "television series",
+  "franchise",
+  "play by",
+  "musical",
+  "comic",
+];
+
+function looksLikePersonSummary(data: {
+  type?: string;
+  description?: string;
+  extract?: string;
+}): boolean {
+  const desc = `${data?.description ?? ""} ${data?.extract?.slice(0, 200) ?? ""}`.toLowerCase();
+  if (!desc.trim()) return true;
+  if (data?.type && data.type !== "standard") return false;
+  return !NON_PERSON_HINTS.some((h) => desc.includes(h));
+}
+
+async function fetchSummary(slug: string) {
   const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(slug)}?redirect=true`;
   try {
     const res = await fetch(url);
     if (!res.ok) return null;
-    const data = await res.json();
-    return data?.thumbnail?.source ?? data?.originalimage?.source ?? null;
+    return await res.json();
   } catch {
     return null;
   }
 }
 
-// Fallback: use the Wikipedia search API to find the best matching article
-// when our direct slug guess fails (handles diacritics, initials, disambig).
+async function fetchPersonPhoto(slug: string): Promise<string | null> {
+  const data = await fetchSummary(slug);
+  if (!data) return null;
+  const photo: string | null = data?.thumbnail?.source ?? data?.originalimage?.source ?? null;
+  if (!photo) return null;
+  if (!looksLikePersonSummary(data)) return null;
+  return photo;
+}
+
+// Fallback: search Wikipedia, scan top results for the first one that looks
+// like a person/character page (skip movies/albums/books).
 async function searchWikipediaPhoto(query: string): Promise<string | null> {
   try {
     const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(
       query,
-    )}&format=json&origin=*&srlimit=1`;
+    )}&format=json&origin=*&srlimit=5`;
     const res = await fetch(searchUrl);
     if (!res.ok) return null;
     const data = await res.json();
-    const title: string | undefined = data?.query?.search?.[0]?.title;
-    if (!title) return null;
-    return await fetchSummaryPhoto(title.replace(/\s+/g, "_"));
+    const hits: { title: string }[] = data?.query?.search ?? [];
+    for (const hit of hits) {
+      const photo = await fetchPersonPhoto(hit.title.replace(/\s+/g, "_"));
+      if (photo) return photo;
+    }
+    return null;
   } catch {
     return null;
   }
 }
 
-export async function fetchPersonaPhoto(personaId: string, name: string): Promise<string | null> {
+export async function fetchPersonaPhoto(
+  personaId: string,
+  name: string,
+  wikiTitle?: string | null,
+): Promise<string | null> {
   hydrate();
-  // 1. Hard overrides win.
   if (PHOTO_OVERRIDES[personaId]) {
     const url = PHOTO_OVERRIDES[personaId];
     memCache.set(personaId, url);
@@ -161,15 +205,16 @@ export async function fetchPersonaPhoto(personaId: string, name: string): Promis
 
   const p = (async () => {
     try {
-      // Try mapped slug first, then raw name, then a Wikipedia search.
+      // Priority: explicit wikiTitle → hand-mapped slug → name → Wikipedia search.
       const candidates: string[] = [];
+      if (wikiTitle) candidates.push(wikiTitle.replace(/\s+/g, "_"));
       if (WIKI_SLUGS[personaId]) candidates.push(WIKI_SLUGS[personaId]);
       const nameSlug = name.replace(/\s+/g, "_");
       if (!candidates.includes(nameSlug)) candidates.push(nameSlug);
 
       let photo: string | null = null;
       for (const slug of candidates) {
-        photo = await fetchSummaryPhoto(slug);
+        photo = await fetchPersonPhoto(slug);
         if (photo) break;
       }
       if (!photo) photo = await searchWikipediaPhoto(name);
