@@ -247,13 +247,6 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
               <Button onClick={handleShare} variant="secondary" className="w-full justify-start gap-2">
                 <Share2 className="w-4 h-4" /> Copy share link
               </Button>
-              <Button
-                onClick={() => goAgain()}
-                variant="ghost"
-                className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
-              >
-                <RefreshCw className="w-4 h-4" /> Run again
-              </Button>
               <div className="text-xs text-muted-foreground pt-2">
                 Rewrote {result.rewrittenCount} / {result.segmentCount} segments.
               </div>
