@@ -192,12 +192,14 @@ export function constrainRewritesForLayout(
     // character actually coming through. Buttons/nav still stay tight so
     // they don't blow up CSS grids, but headlines and paragraphs can stretch.
     const max =
-      seg.kind === "button" ? Math.max(len + 8, Math.ceil(len * 1.5)) :
-      seg.kind === "nav" ? Math.max(len + 6, Math.ceil(len * 1.4)) :
-      seg.kind === "heading" ? Math.max(len + 24, Math.ceil(len * 1.8)) :
-      seg.kind === "subheading" ? Math.max(len + 30, Math.ceil(len * 1.9)) :
-      // text / paragraph / anything else: very loose
-      Math.max(len + 80, Math.ceil(len * 2.2));
+      seg.kind === "button" ? Math.max(len + 10, Math.ceil(len * 1.6)) :
+      seg.kind === "title" ? Math.max(len + 30, Math.ceil(len * 1.8)) :
+      seg.kind === "meta-description" ? Math.max(len + 40, Math.ceil(len * 1.6)) :
+      seg.kind === "alt" || seg.kind === "aria-label" ? Math.max(len + 12, Math.ceil(len * 1.5)) :
+      // "text" — headlines, paragraphs, body. Generous so persona shines.
+      len <= 30 ? Math.max(len + 30, Math.ceil(len * 2.5)) :
+      len <= 90 ? Math.max(len + 60, Math.ceil(len * 2.0)) :
+      Math.max(len + 100, Math.ceil(len * 1.7));
 
     safe[seg.id] = Array.from(compact).length <= max ? compact : compact.slice(0, max).trim();
   }
