@@ -300,22 +300,40 @@ img[data-original]{visibility:visible!important;opacity:1!important;}
       if(!m) return false;
       try{ atom.textContent=decodeURIComponent(m[1]); return true; }catch(e){ return false; }
     }
-    function measureTextWidth(atom){
-      var probe=document.createElement('span');
-      var cs=getComputedStyle(atom);
-      probe.style.cssText='position:absolute;left:-99999px;top:-99999px;visibility:hidden;white-space:nowrap;';
-      probe.style.font=cs.font;
+    function copyFont(probe,cs){
       probe.style.fontFamily=cs.fontFamily;
       probe.style.fontSize=cs.fontSize;
       probe.style.fontWeight=cs.fontWeight;
       probe.style.fontStyle=cs.fontStyle;
+      probe.style.lineHeight=cs.lineHeight;
       probe.style.letterSpacing=cs.letterSpacing;
       probe.style.textTransform=cs.textTransform;
+      probe.style.wordSpacing=cs.wordSpacing;
+      probe.style.fontVariant=cs.fontVariant;
+    }
+    function measureTextWidth(atom){
+      var probe=document.createElement('span');
+      var cs=getComputedStyle(atom);
+      probe.style.cssText='position:absolute;left:-99999px;top:-99999px;visibility:hidden;white-space:nowrap;';
+      copyFont(probe,cs);
       probe.textContent=atom.textContent||'';
       document.body.appendChild(probe);
       var w=probe.getBoundingClientRect().width;
       document.body.removeChild(probe);
       return w;
+    }
+    function measureWrapped(atom,width){
+      var probe=document.createElement('div');
+      var cs=getComputedStyle(atom);
+      probe.style.cssText='position:absolute;left:-99999px;top:-99999px;visibility:hidden;white-space:normal;word-wrap:break-word;';
+      probe.style.width=width+'px';
+      copyFont(probe,cs);
+      probe.textContent=atom.textContent||'';
+      document.body.appendChild(probe);
+      var r=probe.getBoundingClientRect();
+      var res={w:r.width,h:r.height,sw:probe.scrollWidth};
+      document.body.removeChild(probe);
+      return res;
     }
     each(document.querySelectorAll('.t396__elem[data-elem-type="text"] .tn-atom,.t396__elem[data-elem-type="button"] .tn-atom'),function(atom){
       atom.style.removeProperty('font-size');
@@ -332,10 +350,15 @@ img[data-original]{visibility:visible!important;opacity:1!important;}
       var overflow = atom.scrollWidth>atom.clientWidth+1 || atom.scrollHeight>atom.clientHeight+1
         || atom.scrollWidth>maxW+1 || atom.scrollHeight>maxH+1
         || ar.right>er.right+1 || ar.left<er.left-1 || ar.bottom>er.bottom+1 || ar.top<er.top-1;
+      var pad=(parseFloat(getComputedStyle(atom).paddingLeft)||0)+(parseFloat(getComputedStyle(atom).paddingRight)||0);
+      var padV=(parseFloat(getComputedStyle(atom).paddingTop)||0)+(parseFloat(getComputedStyle(atom).paddingBottom)||0);
+      var innerW=maxW-pad-4;
       if(!overflow && isButton){
-        var pad=(parseFloat(getComputedStyle(atom).paddingLeft)||0)+(parseFloat(getComputedStyle(atom).paddingRight)||0);
-        var inner=maxW-pad-4;
-        if(measureTextWidth(atom)>inner) overflow=true;
+        if(measureTextWidth(atom)>innerW) overflow=true;
+      }
+      if(!overflow && !isButton){
+        var m=measureWrapped(atom,innerW);
+        if(m.h>maxH-padV+1 || m.sw>innerW+1) overflow=true;
       }
       if(overflow) restore(atom);
     });
