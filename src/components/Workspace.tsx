@@ -28,12 +28,6 @@ interface Props {
   onClose: () => void;
 }
 
-const FALLBACK_STAGES = [
-  "Fetching site",
-  "Extracting copy",
-  "Rewriting in voice",
-  "Rendering preview",
-] as const;
 
 export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
   { initialUrl, initialPersona, onClose },
@@ -302,8 +296,6 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
           </div>
         )}
 
-        {/* removed FALLBACK_STAGES sentinel */}
-        {false && FALLBACK_STAGES.length}
 
         {error && !loading && (
           <div className="m-auto max-w-md text-center p-6 rounded-xl border border-destructive/40 bg-destructive/10">
