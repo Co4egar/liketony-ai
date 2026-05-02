@@ -300,6 +300,23 @@ img[data-original]{visibility:visible!important;opacity:1!important;}
       if(!m) return false;
       try{ atom.textContent=decodeURIComponent(m[1]); return true; }catch(e){ return false; }
     }
+    function measureTextWidth(atom){
+      var probe=document.createElement('span');
+      var cs=getComputedStyle(atom);
+      probe.style.cssText='position:absolute;left:-99999px;top:-99999px;visibility:hidden;white-space:nowrap;';
+      probe.style.font=cs.font;
+      probe.style.fontFamily=cs.fontFamily;
+      probe.style.fontSize=cs.fontSize;
+      probe.style.fontWeight=cs.fontWeight;
+      probe.style.fontStyle=cs.fontStyle;
+      probe.style.letterSpacing=cs.letterSpacing;
+      probe.style.textTransform=cs.textTransform;
+      probe.textContent=atom.textContent||'';
+      document.body.appendChild(probe);
+      var w=probe.getBoundingClientRect().width;
+      document.body.removeChild(probe);
+      return w;
+    }
     each(document.querySelectorAll('.t396__elem[data-elem-type="text"] .tn-atom,.t396__elem[data-elem-type="button"] .tn-atom'),function(atom){
       atom.style.removeProperty('font-size');
       atom.removeAttribute('data-ps-fit-font');
@@ -312,7 +329,15 @@ img[data-original]{visibility:visible!important;opacity:1!important;}
       if(!maxW||!maxH) return;
       var ar=atom.getBoundingClientRect();
       var er=elem.getBoundingClientRect();
-      if(atom.scrollWidth>maxW+1 || atom.scrollHeight>maxH+1 || ar.right>er.right+1 || ar.left<er.left-1 || ar.bottom>er.bottom+1 || ar.top<er.top-1 || (isButton && ar.width>maxW-8)) restore(atom);
+      var overflow = atom.scrollWidth>atom.clientWidth+1 || atom.scrollHeight>atom.clientHeight+1
+        || atom.scrollWidth>maxW+1 || atom.scrollHeight>maxH+1
+        || ar.right>er.right+1 || ar.left<er.left-1 || ar.bottom>er.bottom+1 || ar.top<er.top-1;
+      if(!overflow && isButton){
+        var pad=(parseFloat(getComputedStyle(atom).paddingLeft)||0)+(parseFloat(getComputedStyle(atom).paddingRight)||0);
+        var inner=maxW-pad-4;
+        if(measureTextWidth(atom)>inner) overflow=true;
+      }
+      if(overflow) restore(atom);
     });
     each(document.querySelectorAll('.t396__elem[data-elem-type="button"]'),function(el){
       var r1=el.getBoundingClientRect();
