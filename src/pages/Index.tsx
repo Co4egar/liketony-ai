@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, Quote } from "lucide-react";
+import { Check } from "lucide-react";
 import { Link } from "react-router-dom";
 import { DomainBar } from "@/components/DomainBar";
 import { PersonaCatalog } from "@/components/PersonaCatalog";
