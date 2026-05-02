@@ -109,11 +109,12 @@ Return STRICT JSON with this shape:
 function toPersona(row: any) {
   return {
     id: row.slug,
-    name: row.name,
+    name: row.canonical_name ?? row.name,
     category: "custom",
     shortBio: row.short_bio,
     voicePrompt: row.voice_prompt,
     signaturePhrases: row.signature_phrases ?? [],
+    wikiTitle: row.wiki_title ?? null,
   };
 }
 
