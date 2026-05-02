@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
           {
             role: "system",
             content:
-              "You build short writing-voice briefs for famous (or fictional) people, used to rewrite landing-page copy in their voice. Be specific and useful, not generic.",
+              "You build deep writing-voice profiles for famous (or fictional) people, used to rewrite landing-page copy in their voice at caricature level 4/5 — unmistakably them, almost parody but still readable. Where applicable, embed accent/dialect phonetically. Output STRICT JSON only.",
           },
           {
             role: "user",
@@ -57,12 +57,26 @@ This may be a nickname, alias, title, or fictional-character reference (e.g. "Go
 
 Return STRICT JSON with this shape:
 {
-  "canonicalName": "The proper full name (e.g. 'Vito Corleone' for 'Godfather'). If the input is already a proper name, repeat it.",
-  "wikiTitle": "The exact English Wikipedia article title for this person/character, with underscores instead of spaces (e.g. 'Vito_Corleone', 'Dwayne_Johnson', 'Lord_Voldemort'). Use the article about the PERSON or CHARACTER, never about a movie/book/album. If unsure, return empty string.",
-  "shortBio": "1 short sentence describing who they are (max 90 chars)",
-  "voicePrompt": "A 3-5 sentence brief for a copywriter capturing their voice: tone, sentence rhythm, vocabulary quirks, signature moves, what they avoid",
-  "signaturePhrases": ["3-5 short signature phrases or verbal tics"]
-}`,
+  "canonicalName": "Proper full name (e.g. 'Vito Corleone' for 'Godfather'). If already a proper name, repeat it.",
+  "wikiTitle": "Exact English Wikipedia article title for this PERSON or CHARACTER (never a movie/book/album), with underscores instead of spaces (e.g. 'Vito_Corleone'). Empty string if unsure.",
+  "shortBio": "1 short sentence (max 90 chars)",
+  "voicePrompt": "3-5 sentence summary brief: tone, rhythm, vocabulary quirks, signature moves, what they avoid",
+  "signaturePhrases": ["3-5 short signature phrases or verbal tics"],
+  "tone": "1-2 sentences on overall emotional tone",
+  "rhythm": "sentence length, cadence, punctuation habits (~50-80 words)",
+  "vocabulary": "favorite words, register, slang, jargon (~50-80 words)",
+  "signatureMoves": "rhetorical structures used again and again (~50-80 words)",
+  "taboos": "things this persona NEVER says or does in writing",
+  "accent": "phonetic accent/dialect rendered in spelling — empty string '' if none",
+  "verbalTics": "stutters, catch-noises, interjections — empty string '' if none",
+  "examples": [
+    {"kind": "headline", "before": "<generic SaaS headline>", "after": "<rewritten in their voice>"},
+    {"kind": "cta", "before": "<generic CTA>", "after": "<rewritten>"},
+    {"kind": "paragraph", "before": "<generic 2-sentence paragraph>", "after": "<rewritten>"}
+  ]
+}
+
+Be SPECIFIC and CARICATURED. If they have a known accent (Scottish, Brooklyn, Southern, French, Yoda-inverted, etc.), render it in spelling.`,
           },
         ],
         response_format: { type: "json_object" },
@@ -90,6 +104,14 @@ Return STRICT JSON with this shape:
       signature_phrases: Array.isArray(profile.signaturePhrases)
         ? profile.signaturePhrases.slice(0, 8)
         : [],
+      tone: String(profile.tone ?? ""),
+      rhythm: String(profile.rhythm ?? ""),
+      vocabulary: String(profile.vocabulary ?? ""),
+      signature_moves: String(profile.signatureMoves ?? ""),
+      taboos: String(profile.taboos ?? ""),
+      accent: String(profile.accent ?? ""),
+      verbal_tics: String(profile.verbalTics ?? ""),
+      examples: Array.isArray(profile.examples) ? profile.examples.slice(0, 5) : [],
     };
     const { data: inserted, error } = await supabase
       .from("custom_personas")
@@ -115,6 +137,14 @@ function toPersona(row: any) {
     voicePrompt: row.voice_prompt,
     signaturePhrases: row.signature_phrases ?? [],
     wikiTitle: row.wiki_title ?? null,
+    tone: row.tone ?? "",
+    rhythm: row.rhythm ?? "",
+    vocabulary: row.vocabulary ?? "",
+    signatureMoves: row.signature_moves ?? "",
+    taboos: row.taboos ?? "",
+    accent: row.accent ?? "",
+    verbalTics: row.verbal_tics ?? "",
+    examples: row.examples ?? [],
   };
 }
 
