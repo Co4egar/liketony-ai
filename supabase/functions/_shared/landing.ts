@@ -309,7 +309,9 @@ img[data-original]{visibility:visible!important;opacity:1!important;}
       var maxW=elem.clientWidth;
       var maxH=elem.clientHeight;
       if(!maxW||!maxH) return;
-      if(atom.scrollWidth>maxW+1 || atom.scrollHeight>maxH+1) restore(atom);
+      var ar=atom.getBoundingClientRect();
+      var er=elem.getBoundingClientRect();
+      if(atom.scrollWidth>maxW+1 || atom.scrollHeight>maxH+1 || ar.right>er.right+1 || ar.left<er.left-1 || ar.bottom>er.bottom+1 || ar.top<er.top-1) restore(atom);
     });
     each(document.querySelectorAll('.t396__elem[data-elem-type="button"]'),function(el){
       var r1=el.getBoundingClientRect();
