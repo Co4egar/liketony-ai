@@ -15,26 +15,41 @@ img[data-original]{visibility:visible!important;opacity:1!important;}
   function each(list,fn){Array.prototype.forEach.call(list,fn);}
   function normalizeTildaRuntime(){
     each(document.querySelectorAll('.t396__elem[style]'),function(el){
-      ['top','left','right','bottom','width','height','transform','transition','transition-duration'].forEach(function(prop){el.style.removeProperty(prop);});
+      ['transform','transition','transition-duration'].forEach(function(prop){el.style.removeProperty(prop);});
       if(!el.getAttribute('style')) el.removeAttribute('style');
     });
   }
   function fitText(){
     normalizeTildaRuntime();
+    function restore(atom){
+      var html=atom.innerHTML;
+      var m=html.match(/<!--LTORIG:([^]*?)-->([^]*?)<!--\/LTORIG-->/);
+      if(!m) return false;
+      try{ atom.textContent=decodeURIComponent(m[1]); return true; }catch(e){ return false; }
+    }
     each(document.querySelectorAll('.t396__elem[data-elem-type="text"] .tn-atom,.t396__elem[data-elem-type="button"] .tn-atom'),function(atom){
       atom.style.removeProperty('font-size');
       atom.removeAttribute('data-ps-fit-font');
       var elem=atom.closest('.t396__elem')||atom.parentElement;
       if(!elem||atom.getAttribute('data-lt-checked')==='1') return;
       atom.setAttribute('data-lt-checked','1');
+      var isButton=elem.getAttribute('data-elem-type')==='button';
       var maxW=elem.clientWidth;
       var maxH=elem.clientHeight;
       if(!maxW||!maxH) return;
-      if(atom.scrollWidth<=maxW+1 && atom.scrollHeight<=maxH+1) return;
-      var html=atom.innerHTML;
-      var m=html.match(/<!--LTORIG:([^]*?)-->([^]*?)<!--\/LTORIG-->/);
-      if(!m) return;
-      try{ atom.textContent=decodeURIComponent(m[1]); }catch(e){}
+      var ar=atom.getBoundingClientRect();
+      var er=elem.getBoundingClientRect();
+      if(atom.scrollWidth>maxW+1 || atom.scrollHeight>maxH+1 || ar.right>er.right+1 || ar.left<er.left-1 || ar.bottom>er.bottom+1 || ar.top<er.top-1 || (isButton && ar.width>maxW-8)) restore(atom);
+    });
+    each(document.querySelectorAll('.t396__elem[data-elem-type="button"]'),function(el){
+      var r1=el.getBoundingClientRect();
+      each(document.querySelectorAll('.t396__elem[data-elem-type="button"]'),function(other){
+        if(other===el) return;
+        var r2=other.getBoundingClientRect();
+        if(r1.right>r2.left && r1.left<r2.right && r1.bottom>r2.top && r1.top<r2.bottom){
+          var atom=el.querySelector('.tn-atom'); if(atom) restore(atom);
+        }
+      });
     });
   }
   document.addEventListener('DOMContentLoaded',fitText);
