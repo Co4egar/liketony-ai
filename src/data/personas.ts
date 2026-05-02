@@ -14,10 +14,12 @@ export type PersonaCategory =
 export interface Persona {
   id: string;
   name: string;
-  category: PersonaCategory;
+  category: PersonaCategory | "custom";
   shortBio: string;
   voicePrompt: string;
   signaturePhrases: string[];
+  /** Optional explicit Wikipedia article title (with underscores) for avatar lookup. */
+  wikiTitle?: string | null;
 }
 
 export const CATEGORIES: { id: PersonaCategory; label: string }[] = [
