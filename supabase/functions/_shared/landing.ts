@@ -187,18 +187,21 @@ export function constrainRewritesForLayout(
 
     const original = seg.text.replace(/\s+/g, " ").trim();
     const len = Array.from(original).length;
-    // Strict length cap — visual builders (Tilda) use absolute positioning,
-    // so any growth past the original box breaks the layout. Allow tiny
-    // wiggle room only; otherwise fall back to the original copy.
+    // Generous length cap — the whole point of this product is the persona
+    // voice taking over. We accept some layout breakage in exchange for the
+    // character actually coming through. Buttons/nav still stay tight so
+    // they don't blow up CSS grids, but headlines and paragraphs can stretch.
     const max =
-      seg.kind === "button" ? Math.min(len + 1, Math.ceil(len * 1.02) + 1) :
-      seg.kind !== "text" ? Math.ceil(len * 1.05) + 1 :
-      len <= 18 ? len + 1 :
-      len <= 40 ? Math.ceil(len * 1.04) + 1 :
-      len <= 90 ? Math.ceil(len * 1.06) + 2 :
-      Math.ceil(len * 1.08);
+      seg.kind === "button" ? Math.max(len + 10, Math.ceil(len * 1.6)) :
+      seg.kind === "title" ? Math.max(len + 30, Math.ceil(len * 1.8)) :
+      seg.kind === "meta-description" ? Math.max(len + 40, Math.ceil(len * 1.6)) :
+      seg.kind === "alt" || seg.kind === "aria-label" ? Math.max(len + 12, Math.ceil(len * 1.5)) :
+      // "text" — headlines, paragraphs, body. Generous so persona shines.
+      len <= 30 ? Math.max(len + 30, Math.ceil(len * 2.5)) :
+      len <= 90 ? Math.max(len + 60, Math.ceil(len * 2.0)) :
+      Math.max(len + 100, Math.ceil(len * 1.7));
 
-    safe[seg.id] = Array.from(compact).length <= max ? compact : original;
+    safe[seg.id] = Array.from(compact).length <= max ? compact : compact.slice(0, max).trim();
   }
   return safe;
 }

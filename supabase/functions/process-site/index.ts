@@ -128,11 +128,12 @@ Apply consistently across every segment: lower = softer, higher = more sales-dri
 
 ABSOLUTE RULES (these override voice):
 1. Preserve original meaning, claims, numbers, prices, names, product features, and URLs. Do NOT invent facts. You may dramatize HOW it's said, never WHAT is true.
-2. Keep each rewritten segment within the original layout. Headlines, cards, buttons, nav items: stay within +10–15% of original length. Paragraphs: up to +20%.
-3. Match the original language (Russian → Russian, English → English, etc.). Even when matching language, KEEP the character's accent quirks and tics translated/adapted into that language so the persona is still unmistakable.
-4. Distribute signature phrases, tics, and accent markers across the page — do NOT pile them into one segment. Short nav labels and buttons stay short and snappy; save the full character voice for headlines and paragraphs.
-5. Never output HTML tags or placeholder tokens.
-6. Output STRICT JSON: { "rewrites": { "<id>": "<new text>", ... } } with one entry per input id.
+2. The character voice is the WHOLE POINT — do not water it down. Headlines and paragraphs MUST sound dramatically different from the original. If the original is "Achieve Peak Performance" and you're Bugs Bunny, output "Eh, wanna reach yer peak, doc? Or just stand around lookin' like a sap?" — not a polite tweak. Buttons stay short (1-5 words) but still in-character ("Click Here" → "Eh, click it, doc").
+3. Length budget: titles can grow up to ~2x, paragraphs up to ~1.8x, buttons stay roughly the same length. Don't pad — make it sing.
+4. Match the original language (Russian → Russian, English → English). Even when matching language, KEEP the character's accent quirks and tics adapted into that language so the persona is unmistakable.
+5. Every rewritten headline/paragraph must contain at least ONE clear character marker (accent spelling, tic, signature move, or signature phrase). No segment should sound generic. Distribute markers across the page — do NOT pile them all into one segment.
+6. Never output HTML tags or placeholder tokens.
+7. Output STRICT JSON: { "rewrites": { "<id>": "<new text>", ... } } with one entry per input id.
 
 If the segment is a 1-2 word nav label or button, render it as ${p.name} would say that exact action — short, in-character, no extra words.`;
 
