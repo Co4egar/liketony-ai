@@ -139,7 +139,7 @@ If the segment is a 1-2 word nav label or button, render it as ${p.name} would s
 
   // Per-segment length budget the LLM must respect — mirrors constrainRewritesForLayout.
   const budgetFor = (kind: Segment["kind"], len: number): number => {
-    if (kind === "button") return Math.max(len + 2, Math.ceil(len * 1.08));
+    if (kind === "button") return len;
     if (kind === "title") return Math.max(len + 6, Math.ceil(len * 1.12));
     if (kind === "meta-description") return Math.max(len + 12, Math.ceil(len * 1.18));
     if (kind === "alt" || kind === "aria-label") return Math.max(len + 4, Math.ceil(len * 1.1));
