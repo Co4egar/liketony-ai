@@ -306,12 +306,13 @@ img[data-original]{visibility:visible!important;opacity:1!important;}
       var elem=atom.closest('.t396__elem')||atom.parentElement;
       if(!elem||atom.getAttribute('data-lt-checked')==='1') return;
       atom.setAttribute('data-lt-checked','1');
+      var isButton=elem.getAttribute('data-elem-type')==='button';
       var maxW=elem.clientWidth;
       var maxH=elem.clientHeight;
       if(!maxW||!maxH) return;
       var ar=atom.getBoundingClientRect();
       var er=elem.getBoundingClientRect();
-      if(atom.scrollWidth>maxW+1 || atom.scrollHeight>maxH+1 || ar.right>er.right+1 || ar.left<er.left-1 || ar.bottom>er.bottom+1 || ar.top<er.top-1) restore(atom);
+      if(atom.scrollWidth>maxW+1 || atom.scrollHeight>maxH+1 || ar.right>er.right+1 || ar.left<er.left-1 || ar.bottom>er.bottom+1 || ar.top<er.top-1 || (isButton && ar.width>maxW-8)) restore(atom);
     });
     each(document.querySelectorAll('.t396__elem[data-elem-type="button"]'),function(el){
       var r1=el.getBoundingClientRect();
