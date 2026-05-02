@@ -24,6 +24,17 @@ img[data-original]{visibility:visible!important;opacity:1!important;}
     each(document.querySelectorAll('.t396__elem[data-elem-type="text"] .tn-atom,.t396__elem[data-elem-type="button"] .tn-atom'),function(atom){
       atom.style.removeProperty('font-size');
       atom.removeAttribute('data-ps-fit-font');
+      var elem=atom.closest('.t396__elem')||atom.parentElement;
+      if(!elem||atom.getAttribute('data-lt-checked')==='1') return;
+      atom.setAttribute('data-lt-checked','1');
+      var maxW=elem.clientWidth;
+      var maxH=elem.clientHeight;
+      if(!maxW||!maxH) return;
+      if(atom.scrollWidth<=maxW+1 && atom.scrollHeight<=maxH+1) return;
+      var html=atom.innerHTML;
+      var m=html.match(/<!--LTORIG:([^]*?)-->([^]*?)<!--\/LTORIG-->/);
+      if(!m) return;
+      try{ atom.textContent=decodeURIComponent(m[1]); }catch(e){}
     });
   }
   document.addEventListener('DOMContentLoaded',fitText);
