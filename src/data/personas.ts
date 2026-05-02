@@ -11,15 +11,43 @@ export type PersonaCategory =
   | "politicians"
   | "cartoons";
 
+export interface PersonaExample {
+  /** What kind of landing copy this is. */
+  kind: "headline" | "cta" | "paragraph" | "feature" | "nav";
+  /** A typical generic version. */
+  before: string;
+  /** What this persona would write instead. */
+  after: string;
+}
+
 export interface Persona {
   id: string;
   name: string;
   category: PersonaCategory | "custom";
   shortBio: string;
+  /** Compact 3-5 sentence brief, kept for backwards compat / UI hovers. */
   voicePrompt: string;
   signaturePhrases: string[];
   /** Optional explicit Wikipedia article title (with underscores) for avatar lookup. */
   wikiTitle?: string | null;
+
+  // ===== Deep voice profile (used by the rewrite prompt) =====
+  /** One sentence on overall emotional tone. */
+  tone?: string;
+  /** Sentence rhythm and length. */
+  rhythm?: string;
+  /** Vocabulary quirks, favourite words, register, slang, jargon. */
+  vocabulary?: string;
+  /** Signature rhetorical moves they use again and again. */
+  signatureMoves?: string;
+  /** Things this persona NEVER does. */
+  taboos?: string;
+  /** Phonetic accent/dialect rendered in spelling, if applicable. */
+  accent?: string;
+  /** Stutters, verbal tics, catch-noises. */
+  verbalTics?: string;
+  /** 2-3 before/after rewrites to anchor the model. */
+  examples?: PersonaExample[];
 }
 
 export const CATEGORIES: { id: PersonaCategory; label: string }[] = [
