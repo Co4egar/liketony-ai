@@ -46,14 +46,14 @@ export const PersonaAvatar = forwardRef<HTMLDivElement, Props>(
       let cancelled = false;
       setPhoto(null);
       setLoaded(false);
-      fetchPersonaPhoto(persona.id, persona.name).then((url) => {
+      fetchPersonaPhoto(persona.id, persona.name, persona.wikiTitle).then((url) => {
         if (cancelled) return;
         setPhoto(url);
       });
       return () => {
         cancelled = true;
       };
-    }, [persona.id, persona.name]);
+    }, [persona.id, persona.name, persona.wikiTitle]);
 
     return (
       <div
