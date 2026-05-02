@@ -101,13 +101,19 @@ const Index = () => {
                   </div>
                 </div>
               </div>
-              {persona.signaturePhrases?.[0] && (
-                <blockquote className="mt-3 pt-3 border-t border-border/60 text-sm italic text-foreground leading-snug">
-                  <span className="text-coral font-display text-lg leading-none mr-1">“</span>
-                  {persona.signaturePhrases[0]}
-                  <span className="text-coral font-display text-lg leading-none ml-0.5">”</span>
-                </blockquote>
-              )}
+              {(() => {
+                const punchline =
+                  persona.signaturePhrases?.length
+                    ? [...persona.signaturePhrases].sort((a, b) => b.length - a.length)[0]
+                    : persona.shortBio;
+                return (
+                  <blockquote className="mt-3 pt-3 border-t border-border/60 text-sm italic text-foreground leading-snug">
+                    <span className="text-coral font-display text-lg leading-none mr-1">“</span>
+                    {punchline}
+                    <span className="text-coral font-display text-lg leading-none ml-0.5">”</span>
+                  </blockquote>
+                );
+              })()}
             </div>
           </div>
         </section>
