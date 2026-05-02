@@ -155,10 +155,10 @@ export function applyRewrites(
     // Escape for HTML attribute contexts vs text contexts.
     const safe =
       seg.kind === "text" || seg.kind === "button"
-        ? replacement
+        ? `<!--LTORIG:${encodeURIComponent(seg.text)}-->${replacement
             .replaceAll("&", "&amp;")
             .replaceAll("<", "&lt;")
-            .replaceAll(">", "&gt;")
+            .replaceAll(">", "&gt;")}<!--/LTORIG-->`
         : replacement.replaceAll('"', "&quot;").replaceAll("'", "&#39;");
     out = out.split(placeholder(seg.id)).join(safe);
   }
