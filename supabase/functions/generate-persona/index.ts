@@ -11,6 +11,37 @@ function slugify(name: string): string {
     .slice(0, 60);
 }
 
+const FIRECRAWL_SEARCH_URL = "https://api.firecrawl.dev/v2/search";
+
+async function gatherResearch(name: string) {
+  const apiKey = Deno.env.get("FIRECRAWL_API_KEY");
+  if (!apiKey) return { query: name, sources: [] };
+  const query = `${name} biography interviews speaking style signature phrases quotes`;
+  try {
+    const resp = await fetch(FIRECRAWL_SEARCH_URL, {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        query,
+        limit: 5,
+        scrapeOptions: { formats: ["markdown"], onlyMainContent: true, timeout: 20000 },
+      }),
+    });
+    if (!resp.ok) return { query, sources: [] };
+    const payload = await resp.json().catch(() => null) as any;
+    const rows = Array.isArray(payload?.data) ? payload.data : [];
+    const sources = rows.slice(0, 5).map((r: any) => ({
+      title: String(r?.title ?? "").slice(0, 160),
+      url: String(r?.url ?? "").slice(0, 500),
+      description: String(r?.description ?? "").slice(0, 700),
+      content: String(r?.markdown ?? r?.content ?? "").replace(/\s+/g, " ").slice(0, 2200),
+    })).filter((r: any) => r.title || r.url || r.content);
+    return { query, sources };
+  } catch {
+    return { query, sources: [] };
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
@@ -38,22 +69,27 @@ Deno.serve(async (req) => {
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) throw new Error("LOVABLE_API_KEY not configured");
 
+    const research = await gatherResearch(cleanName);
+
     const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-2.5-pro",
         messages: [
           {
             role: "system",
             content:
-              "You build deep writing-voice profiles for famous (or fictional) people, used to rewrite landing-page copy in their voice at caricature level 4/5 — unmistakably them, almost parody but still readable. Where applicable, embed accent/dialect phonetically. Output STRICT JSON only.",
+              "You build deep writing-voice profiles for famous (or fictional) people, used to rewrite landing-page copy in their voice at caricature level 4/5 — unmistakably them, almost parody but still readable. Use supplied research snippets when present, infer cautiously when absent, and never fabricate factual claims for marketing copy. Output STRICT JSON only.",
           },
           {
             role: "user",
             content: `User typed: "${cleanName}"
 
 This may be a nickname, alias, title, or fictional-character reference (e.g. "Godfather" → Vito Corleone, "The Rock" → Dwayne Johnson, "Voldemort" → fictional).
+
+Deep research snippets gathered for this persona:
+${JSON.stringify(research, null, 2).slice(0, 12000)}
 
 Return STRICT JSON with this shape:
 {
@@ -69,6 +105,16 @@ Return STRICT JSON with this shape:
   "taboos": "things this persona NEVER says or does in writing",
   "accent": "phonetic accent/dialect rendered in spelling — empty string '' if none",
   "verbalTics": "stutters, catch-noises, interjections — empty string '' if none",
+  "knowledgeBase": {
+    "sourceUrls": ["research source URLs used"],
+    "biography": "compact factual context relevant to voice",
+    "publicPersona": "how they are publicly perceived and what role they play",
+    "styleMarkers": ["specific recognizable voice/style markers"],
+    "rhetoricalPatterns": ["repeatable rhetorical patterns"],
+    "vocabularyBank": ["words and phrases strongly associated with them"],
+    "quoteParaphrases": ["short paraphrases of known themes; do not overquote"],
+    "avoidances": ["things to avoid to prevent weak imitation or legal/safety issues"]
+  },
   "examples": [
     {"kind": "headline", "before": "<generic SaaS headline>", "after": "<rewritten in their voice>"},
     {"kind": "cta", "before": "<generic CTA>", "after": "<rewritten>"},
@@ -76,9 +122,11 @@ Return STRICT JSON with this shape:
   ]
 }
 
-Be SPECIFIC and CARICATURED. If they have a known accent (Scottish, Brooklyn, Southern, French, Yoda-inverted, etc.), render it in spelling.`,
+Be SPECIFIC and CARICATURED. If they have a known accent (Scottish, Brooklyn, Southern, French, Yoda-inverted, etc.), render it in spelling. The knowledgeBase must be useful for future reuse without re-searching.`,
           },
         ],
+        temperature: 1.05,
+        top_p: 0.95,
         response_format: { type: "json_object" },
       }),
     });
@@ -111,6 +159,9 @@ Be SPECIFIC and CARICATURED. If they have a known accent (Scottish, Brooklyn, So
       taboos: String(profile.taboos ?? ""),
       accent: String(profile.accent ?? ""),
       verbal_tics: String(profile.verbalTics ?? ""),
+      knowledge_base: profile.knowledgeBase && typeof profile.knowledgeBase === "object"
+        ? profile.knowledgeBase
+        : { sourceUrls: research.sources.map((s: any) => s.url).filter(Boolean), rawResearch: research.sources },
       examples: Array.isArray(profile.examples) ? profile.examples.slice(0, 5) : [],
     };
     const { data: inserted, error } = await supabase
@@ -144,6 +195,7 @@ function toPersona(row: any) {
     taboos: row.taboos ?? "",
     accent: row.accent ?? "",
     verbalTics: row.verbal_tics ?? "",
+    knowledgeBase: row.knowledge_base ?? {},
     examples: row.examples ?? [],
   };
 }
