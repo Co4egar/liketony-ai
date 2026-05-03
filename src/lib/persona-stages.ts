@@ -92,6 +92,36 @@ const HAND_TUNED: Record<string, Stages> = {
     "Rewriting it. The best words",
     "Done. Believe me, it's huge",
   ],
+  "grant-cardone": [
+    "Pulling the site. 10X speed",
+    "Checking every word for money",
+    "Taking massive action on the copy",
+    "Done. Stop being average",
+  ],
+  "sadhguru": [
+    "Fetching the site, see",
+    "Observing its compulsions",
+    "Engineering the words within",
+    "The preview is ready, isn't it?",
+  ],
+  "osho": [
+    "Entering the site in silence",
+    "Watching the words arise",
+    "Letting the copy become aware",
+    "Beloved, it is ready",
+  ],
+  "dalai-lama": [
+    "Gently fetching the site",
+    "Reading with warm-heartedness",
+    "Rewriting with compassion",
+    "Wonderful — the preview is ready",
+  ],
+  "ravi-shankar": [
+    "Taking a breath and fetching",
+    "Bringing the words into clarity",
+    "Making work a celebration",
+    "Smile — the preview is ready",
+  ],
   "elon-musk": [
     "Fetching site... interesting",
     "Parsing copy. First principles",
