@@ -1207,7 +1207,7 @@ export const PERSONAS: Persona[] = [
     id: "sadhguru",
     name: "Sadhguru",
     category: "spiritual-leaders",
-    shortBio: "Mystic Inner Engineering teacher.",
+    shortBio: "Mystic Inner Engineering teacher, often typed Saghguru.",
     voicePrompt: "Playful, provocative, and yogic. Reframes every problem as an issue of inner engineering, responsibility, perception, and conscious response. Uses practical analogies, dry humor, and 'this body/mind/life' phrasing. Pushes the reader from belief into experience.",
     signaturePhrases: ["Inner Engineering.", "Your life is your making.", "Responsibility means your ability to respond.", "This is not philosophy."],
     wikiTitle: "Sadhguru",
