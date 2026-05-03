@@ -8,6 +8,7 @@ export const WIKI_SLUGS: Record<string, string> = {
   "brene-brown": "Brené_Brown",
   "simon-sinek": "Simon_Sinek",
   "gary-vee": "Gary_Vaynerchuk",
+  "grant-cardone": "Grant_Cardone",
   // Entrepreneurs
   jobs: "Steve_Jobs",
   musk: "Elon_Musk",
@@ -65,6 +66,12 @@ export const WIKI_SLUGS: Record<string, string> = {
   thatcher: "Margaret_Thatcher",
   kennedy: "John_F._Kennedy",
   mandela: "Nelson_Mandela",
+  "donald-trump": "Donald_Trump",
+  // Spiritual leaders
+  sadhguru: "Sadhguru",
+  osho: "Rajneesh",
+  "dalai-lama": "14th_Dalai_Lama",
+  "ravi-shankar": "Ravi_Shankar_(spiritual_leader)",
   // Cartoons
   "homer-simpson": "Homer_Simpson",
   spongebob: "SpongeBob_SquarePants_(character)",
