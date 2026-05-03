@@ -84,6 +84,7 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
               accent: pending.persona.accent,
               verbalTics: pending.persona.verbalTics,
               examples: pending.persona.examples,
+              knowledgeBase: pending.persona.knowledgeBase,
             },
           },
         });

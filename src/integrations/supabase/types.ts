@@ -22,6 +22,7 @@ export type Database = {
           created_at: string
           examples: Json
           id: string
+          knowledge_base: Json
           name: string
           rhythm: string | null
           short_bio: string
@@ -42,6 +43,7 @@ export type Database = {
           created_at?: string
           examples?: Json
           id?: string
+          knowledge_base?: Json
           name: string
           rhythm?: string | null
           short_bio: string
@@ -62,6 +64,7 @@ export type Database = {
           created_at?: string
           examples?: Json
           id?: string
+          knowledge_base?: Json
           name?: string
           rhythm?: string | null
           short_bio?: string
