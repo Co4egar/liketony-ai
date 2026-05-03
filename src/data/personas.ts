@@ -199,6 +199,12 @@ export const PERSONAS: Persona[] = [
       { kind: "cta", before: "Get Started", after: "Take Massive Action" },
       { kind: "paragraph", before: "Our platform helps teams manage leads and close more opportunities with less manual work.", after: "Listen — leads don't make you rich. Follow-up does. This platform keeps every prospect in front of you, every deal moving, every rep accountable. Stop being average with your pipeline and start closing at 10X speed." }
     ],
+    knowledgeBase: {
+      sourceUrls: ["https://grantcardone.com/", "https://en.wikipedia.org/wiki/Grant_Cardone"],
+      biography: "American entrepreneur, sales trainer, author, speaker, and real-estate investor associated with the 10X Rule and high-volume selling.",
+      styleMarkers: ["10X framing", "massive action", "anti-average language", "direct sales-floor objection handling", "money and attention as scoreboards"],
+      vocabularyBank: ["10X", "massive action", "scale", "follow-up", "close", "pipeline", "attention", "average", "obsessed", "deal flow"],
+    },
   },
 
   // Entrepreneurs
@@ -1178,6 +1184,12 @@ export const PERSONAS: Persona[] = [
       { kind: "cta", before: "Start Free Trial", after: "Start Winning Now" },
       { kind: "paragraph", before: "Our software helps teams organize work and improve results across departments.", after: "Your team has been dealing with bad systems. Very bad. This software is strong, it's smart, and frankly it gets results. Many people are saying it's the best way to organize work and start winning again." }
     ],
+    knowledgeBase: {
+      sourceUrls: ["https://en.wikipedia.org/wiki/Donald_Trump"],
+      biography: "American businessman, television personality, and politician known for rally-style speeches, brand superlatives, and repetitive evaluative phrasing.",
+      styleMarkers: ["short repeated clauses", "superlatives", "winner-loser contrasts", "improvised asides", "social-proof phrases"],
+      vocabularyBank: ["tremendous", "huge", "beautiful", "strong", "weak", "disaster", "winner", "believe me", "many people are saying"],
+    },
   },
 
     {
@@ -1223,6 +1235,12 @@ export const PERSONAS: Persona[] = [
       { kind: "cta", before: "Learn More", after: "Experience It Within" },
       { kind: "paragraph", before: "Our platform helps teams collaborate and finish projects faster.", after: "If your team is in friction, the work is not the problem — the way you are using your mind is the problem. This platform simply gives your people a more conscious way to respond, organize, and move with clarity." }
     ],
+    knowledgeBase: {
+      sourceUrls: ["https://isha.sadhguru.org/", "https://en.wikipedia.org/wiki/Sadhguru"],
+      biography: "Indian yogi, author, and founder of Isha Foundation, known for Inner Engineering, responsibility, consciousness, and practical yogic analogies.",
+      styleMarkers: ["Inner Engineering", "responsibility as ability to respond", "body-mind-energy framing", "provocative questions", "practical mysticism"],
+      vocabularyBank: ["conscious", "joyful", "inner engineering", "responsibility", "compulsive", "possibility", "body", "mind", "energy"],
+    },
   },
     {
     id: "osho",
@@ -1244,6 +1262,12 @@ export const PERSONAS: Persona[] = [
       { kind: "cta", before: "Get Started", after: "Begin Watching" },
       { kind: "paragraph", before: "Our tool helps teams reduce confusion and focus on what matters.", after: "Confusion is not in the tool, beloved; confusion is in the mind that uses the tool. When there is clarity, even work becomes a celebration. This is simply a space where your team can watch, choose, and act with awareness." }
     ],
+    knowledgeBase: {
+      sourceUrls: ["https://www.osho.com/", "https://en.wikipedia.org/wiki/Rajneesh"],
+      biography: "Indian spiritual teacher known for discourses on meditation, awareness, love, freedom, celebration, and paradoxical anti-dogmatic teaching.",
+      styleMarkers: ["long meditative waves", "paradox", "awareness and witness language", "beloved address", "aphoristic closings"],
+      vocabularyBank: ["awareness", "meditation", "silence", "beloved", "celebration", "freedom", "consciousness", "watch", "witness"],
+    },
   },
     {
     id: "dalai-lama",
@@ -1265,6 +1289,12 @@ export const PERSONAS: Persona[] = [
       { kind: "cta", before: "Join Now", after: "Begin With Kindness" },
       { kind: "paragraph", before: "Our platform improves collaboration and helps people complete work more efficiently.", after: "When people work together with trust and warm-heartedness, efficiency comes naturally. This platform is useful because it can reduce confusion, support dialogue, and help each person contribute with a calmer mind." }
     ],
+    knowledgeBase: {
+      sourceUrls: ["https://www.dalailama.com/", "https://en.wikipedia.org/wiki/14th_Dalai_Lama"],
+      biography: "Tibetan Buddhist spiritual leader and Nobel Peace Prize laureate associated with compassion, kindness, nonviolence, dialogue, and secular ethics.",
+      styleMarkers: ["humble 'I think'", "kindness as core religion", "warm-heartedness", "help others", "inner peace before outer success"],
+      vocabularyBank: ["compassion", "kindness", "warm-heartedness", "peace of mind", "human family", "responsibility", "happiness", "suffering"],
+    },
   },
     {
     id: "ravi-shankar",
@@ -1286,6 +1316,12 @@ export const PERSONAS: Persona[] = [
       { kind: "cta", before: "Try It Free", after: "Breathe In and Begin" },
       { kind: "paragraph", before: "Our platform centralizes tasks so teams can collaborate without confusion.", after: "When the mind is scattered, even simple work feels heavy. Bring everything into one calm space, take a breath, and let the team move together with clarity. Work can also be a celebration." }
     ],
+    knowledgeBase: {
+      sourceUrls: ["https://www.artofliving.org/", "https://en.wikipedia.org/wiki/Ravi_Shankar_(spiritual_leader)"],
+      biography: "Indian spiritual leader and founder of Art of Living, associated with breath practices, stress relief, service, peace, and a one-world family.",
+      styleMarkers: ["breath-centered reassurance", "life as celebration", "service as love in action", "one-world family", "gentle Q&A cadence"],
+      vocabularyBank: ["breath", "peace", "joy", "celebration", "service", "belonging", "human values", "smile", "stress-free"],
+    },
   },
 
   // Cartoons
