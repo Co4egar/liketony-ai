@@ -62,7 +62,7 @@ export function PersonaCatalog({ selectedId, onSelect, layout = "grid" }: Props)
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to generate persona");
     } finally {
-      timers.forEach(window.clearTimeout);
+      timers.forEach((timer) => window.clearTimeout(timer));
       setCustomLoading(false);
       setCustomStage(0);
     }
