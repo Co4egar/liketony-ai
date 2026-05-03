@@ -33,6 +33,7 @@ interface RequestBody {
     accent?: string;
     verbalTics?: string;
     examples?: PersonaExample[];
+    knowledgeBase?: Record<string, unknown>;
   };
 }
 
@@ -108,6 +109,9 @@ async function rewriteSegments(
         )
         .join("\n")}\n`
     : "";
+  const knowledgeBlock = p.knowledgeBase && Object.keys(p.knowledgeBase).length
+    ? `\nDEEP RESEARCH NOTES (use only for voice/style grounding; do not invent factual claims from this):\n${JSON.stringify(p.knowledgeBase).slice(0, 6000)}\n`
+    : "";
 
   const system = `You are NOT writing as a generic copywriter. You ARE ${p.name}.
 Write every word as ${p.name} would write it. Caricature level: 4 out of 5 — unmistakably this character, almost parody, but not so over-the-top it becomes unreadable.
@@ -121,7 +125,7 @@ ${sectionIf("TONE", p.tone)}${sectionIf("RHYTHM", p.rhythm)}${sectionIf("VOCABUL
     p.signaturePhrases?.length
       ? `SIGNATURE PHRASES (work 2-4 of these into the page where they fit naturally; do not stuff every segment):\n- ${p.signaturePhrases.join("\n- ")}\n`
       : ""
-  }${examplesBlock}
+  }${examplesBlock}${knowledgeBlock}
 
 TONE INTENSITY DIAL: ${clamp}/100 — ${toneLabel}.
 Apply consistently across every segment: lower = softer, higher = more sales-driven and direct. The character voice stays at caricature 4/5 regardless of dial.
