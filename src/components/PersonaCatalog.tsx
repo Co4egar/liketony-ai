@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Search, Sparkles, Loader2, TrendingUp } from "lucide-react";
+import { Check, Search, Sparkles, Loader2, TrendingUp } from "lucide-react";
 import { CATEGORIES, PERSONAS, Persona, PersonaCategory } from "@/data/personas";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -19,8 +19,16 @@ export function PersonaCatalog({ selectedId, onSelect, layout = "grid" }: Props)
   const [query, setQuery] = useState("");
   const [activeCat, setActiveCat] = useState<PersonaCategory | "all">("all");
   const [customLoading, setCustomLoading] = useState(false);
+  const [customStage, setCustomStage] = useState(0);
   const [customName, setCustomName] = useState("");
   const usage = usePersonaUsage();
+
+  const customStages = [
+    "Searching public sources",
+    "Extracting voice patterns",
+    "Building deep knowledge profile",
+    "Saving for future requests",
+  ];
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -38,6 +46,10 @@ export function PersonaCatalog({ selectedId, onSelect, layout = "grid" }: Props)
       return;
     }
     setCustomLoading(true);
+    setCustomStage(0);
+    const timers = [900, 2400, 4200].map((delay, i) =>
+      window.setTimeout(() => setCustomStage(i + 1), delay),
+    );
     try {
       const { data, error } = await supabase.functions.invoke("generate-persona", {
         body: { name },
@@ -50,7 +62,9 @@ export function PersonaCatalog({ selectedId, onSelect, layout = "grid" }: Props)
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to generate persona");
     } finally {
+      timers.forEach(window.clearTimeout);
       setCustomLoading(false);
+      setCustomStage(0);
     }
   };
 
@@ -66,23 +80,54 @@ export function PersonaCatalog({ selectedId, onSelect, layout = "grid" }: Props)
             className="pl-9 bg-card/60 border-border/60"
           />
         </div>
-        <div className="flex items-center gap-2 max-w-md w-full sm:w-auto">
-          <Sparkles className="w-4 h-4 text-primary shrink-0" />
-          <Input
-            value={customName}
-            onChange={(e) => setCustomName(e.target.value)}
-            placeholder="Or type any name..."
-            className="bg-card/60 border-border/60"
-            onKeyDown={(e) => e.key === "Enter" && handleCustom()}
-          />
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={handleCustom}
-            disabled={customLoading}
-          >
-            {customLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Add"}
-          </Button>
+        <div className="w-full max-w-md space-y-2 sm:w-auto">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-primary shrink-0" />
+            <Input
+              value={customName}
+              onChange={(e) => setCustomName(e.target.value)}
+              placeholder="Or type any name..."
+              className="bg-card/60 border-border/60"
+              onKeyDown={(e) => e.key === "Enter" && !customLoading && handleCustom()}
+              disabled={customLoading}
+            />
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleCustom}
+              disabled={customLoading}
+            >
+              {customLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Add"}
+            </Button>
+          </div>
+          {customLoading && (
+            <div className="rounded-lg border border-border/60 bg-card/60 p-3 text-xs shadow-card animate-fade-in">
+              <div className="mb-2 flex items-center gap-2 font-medium text-foreground">
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                Deep research can take a moment
+              </div>
+              <div className="space-y-1.5">
+                {customStages.map((stage, i) => (
+                  <div
+                    key={stage}
+                    className={cn(
+                      "flex items-center gap-2 transition-colors",
+                      i < customStage ? "text-foreground" : i === customStage ? "text-primary" : "text-muted-foreground",
+                    )}
+                  >
+                    {i < customStage ? (
+                      <Check className="h-3.5 w-3.5 shrink-0 text-primary" />
+                    ) : i === customStage ? (
+                      <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
+                    ) : (
+                      <span className="h-3.5 w-3.5 shrink-0 rounded-full border border-border" />
+                    )}
+                    <span>{stage}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
