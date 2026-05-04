@@ -15,6 +15,20 @@ interface Props {
 
 type Step = "email" | "otp" | "paywall";
 
+const invokeWithTimeout = async <T,>(name: string, timeoutMs = 15000) => {
+  let timer: number | undefined;
+  try {
+    return await Promise.race([
+      supabase.functions.invoke<T>(name),
+      new Promise<never>((_, reject) => {
+        timer = window.setTimeout(() => reject(new Error("Request timed out. Please try again.")), timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timer) window.clearTimeout(timer);
+  }
+};
+
 export function SubscriptionGate({ open, onOpenChange, onSubscribed }: Props) {
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
@@ -66,6 +80,7 @@ export function SubscriptionGate({ open, onOpenChange, onSubscribed }: Props) {
 
   const verifyCode = async () => {
     if (!code.trim()) return;
+    const checkoutWindow = window.open("", "_blank");
     setLoading(true);
     try {
       const { error } = await supabase.auth.verifyOtp({
@@ -79,41 +94,57 @@ export function SubscriptionGate({ open, onOpenChange, onSubscribed }: Props) {
         }
         throw error;
       }
-      const { data } = await supabase.functions.invoke("check-subscription");
+      const { data, error: subscriptionError } = await invokeWithTimeout<{ subscribed?: boolean }>("check-subscription");
+      if (subscriptionError) throw subscriptionError;
       if (data?.subscribed) {
+        checkoutWindow?.close();
         toast.success("Welcome back! Subscription active");
         onSubscribed();
         onOpenChange(false);
         reset();
       } else {
+        toast.info("Opening checkout...");
         setStep("paywall");
+        await startCheckout(checkoutWindow);
       }
     } catch (e) {
+      checkoutWindow?.close();
       toast.error(e instanceof Error ? e.message : "Invalid code");
     } finally { setLoading(false); }
   };
 
+  const startCheckout = async (checkoutWindow?: Window | null) => {
+    const { data, error } = await invokeWithTimeout<{ url?: string }>("create-checkout");
+    if (error) throw error;
+    if (!data?.url) throw new Error("Checkout URL was not returned");
+
+    if (checkoutWindow && !checkoutWindow.closed) {
+      checkoutWindow.location.href = data.url;
+    } else {
+      const opened = window.open(data.url, "_blank");
+      if (!opened) window.location.href = data.url;
+    }
+
+    setWaitingPayment(true);
+    pollRef.current = window.setInterval(async () => {
+      const { data: sub } = await invokeWithTimeout<{ subscribed?: boolean }>("check-subscription", 10000);
+      if (sub?.subscribed) {
+        stopPolling();
+        toast.success("Payment confirmed! Downloading...");
+        onSubscribed();
+        onOpenChange(false);
+        reset();
+      }
+    }, 3000);
+  };
+
   const goCheckout = async () => {
+    const checkoutWindow = window.open("", "_blank");
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("create-checkout");
-      if (error) throw error;
-      if (data?.url) {
-        window.open(data.url, "_blank");
-        // Start polling for active subscription
-        setWaitingPayment(true);
-        pollRef.current = window.setInterval(async () => {
-          const { data: sub } = await supabase.functions.invoke("check-subscription");
-          if (sub?.subscribed) {
-            stopPolling();
-            toast.success("Payment confirmed! Downloading...");
-            onSubscribed();
-            onOpenChange(false);
-            reset();
-          }
-        }, 3000);
-      }
+      await startCheckout(checkoutWindow);
     } catch (e) {
+      checkoutWindow?.close();
       toast.error(e instanceof Error ? e.message : "Failed to start checkout");
     } finally { setLoading(false); }
   };
