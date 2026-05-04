@@ -217,15 +217,15 @@ export async function fetchPersonaPhoto(
   const p = (async () => {
     try {
       // Priority: explicit wikiTitle → hand-mapped slug → name → Wikipedia search.
-      const candidates: string[] = [];
-      if (wikiTitle) candidates.push(wikiTitle.replace(/\s+/g, "_"));
-      if (WIKI_SLUGS[personaId]) candidates.push(WIKI_SLUGS[personaId]);
+      const candidates: { slug: string; trusted: boolean }[] = [];
+      if (wikiTitle) candidates.push({ slug: wikiTitle.replace(/\s+/g, "_"), trusted: true });
+      if (WIKI_SLUGS[personaId]) candidates.push({ slug: WIKI_SLUGS[personaId], trusted: true });
       const nameSlug = name.replace(/\s+/g, "_");
-      if (!candidates.includes(nameSlug)) candidates.push(nameSlug);
+      if (!candidates.find((c) => c.slug === nameSlug)) candidates.push({ slug: nameSlug, trusted: false });
 
       let photo: string | null = null;
-      for (const slug of candidates) {
-        photo = await fetchPersonPhoto(slug);
+      for (const c of candidates) {
+        photo = await fetchPersonPhoto(c.slug, c.trusted);
         if (photo) break;
       }
       if (!photo) photo = await searchWikipediaPhoto(name);
