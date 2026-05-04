@@ -157,7 +157,15 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
       });
       if (error) throw error;
       if (!data?.url) throw new Error("No checkout URL");
-      window.location.href = data.url;
+      const win = window.open(data.url, "_blank", "noopener,noreferrer");
+      if (!win) {
+        // Popup blocked — break out of iframe to top-level navigation
+        try {
+          window.top!.location.href = data.url;
+        } catch {
+          window.location.href = data.url;
+        }
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to start checkout");
       setPaying(false);
