@@ -98,7 +98,7 @@ const Index = () => {
                   </p>
                   <p className="text-[11px] text-muted-foreground truncate m-0">
                     {persona.shortBio}
-                  </div>
+                  </p>
                 </div>
               </div>
               {(() => {
@@ -114,7 +114,7 @@ const Index = () => {
                   </blockquote>
                 );
               })()}
-            </div>
+            </aside>
           </div>
         </section>
 
