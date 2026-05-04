@@ -428,11 +428,6 @@ function PreviewFrame({ srcDoc }: { srcDoc: string }) {
           }}
         />
       </div>
-      <SubscriptionGate
-        open={gateOpen}
-        onOpenChange={setGateOpen}
-        onSubscribed={() => { refreshSub(); performDownload(); }}
-      />
     </div>
   );
 }
