@@ -118,7 +118,8 @@ const Index = () => {
           </div>
         </section>
 
-        <section id="voices" className="px-6 sm:px-10 pt-2 pb-16 max-w-6xl mx-auto">
+        <section id="voices" aria-labelledby="voices-heading" className="px-6 sm:px-10 pt-2 pb-16 max-w-6xl mx-auto">
+          <h2 id="voices-heading" className="sr-only">Pick a voice</h2>
           <PersonaCatalog selectedId={persona?.id} onSelect={setPersona} />
         </section>
 
