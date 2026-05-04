@@ -147,9 +147,14 @@ export function SubscriptionGate({ open, onOpenChange, onSubscribed }: Props) {
                 <div className="text-4xl font-bold">$19.99<span className="text-base font-normal text-muted-foreground">/mo</span></div>
                 <div className="text-xs text-muted-foreground mt-1">Cancel anytime</div>
               </div>
-              <Button onClick={goCheckout} disabled={loading} className="w-full" size="lg">
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Subscribe with Stripe"}
+              <Button onClick={goCheckout} disabled={loading || waitingPayment} className="w-full" size="lg">
+                {loading || waitingPayment ? <Loader2 className="w-4 h-4 animate-spin" /> : "Subscribe with Stripe"}
               </Button>
+              {waitingPayment && (
+                <p className="text-xs text-center text-muted-foreground">
+                  Waiting for payment confirmation... Complete checkout in the new tab.
+                </p>
+              )}
               <p className="text-xs text-muted-foreground text-center">
                 After payment, your subscription will be active for {email}.
               </p>
