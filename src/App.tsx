@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import SharedRewrite from "./pages/SharedRewrite.tsx";
+import StripePage from "./pages/Stripe.tsx";
 import WhyItMatters from "./pages/WhyItMatters.tsx";
 
 const queryClient = new QueryClient();
@@ -19,6 +20,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/r/:publicId" element={<SharedRewrite />} />
+          <Route path="/stripe" element={<StripePage />} />
           <Route path="/why-it-matters" element={<WhyItMatters />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
