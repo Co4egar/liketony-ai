@@ -12,8 +12,13 @@ Deno.serve(async (req) => {
   try {
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not configured");
-    const { sessionId } = await req.json();
-    if (!sessionId) throw new Error("sessionId required");
+    const { sessionId } = await req.json().catch(() => ({}));
+    if (!sessionId || typeof sessionId !== "string" || sessionId.length > 200 || !/^cs_[A-Za-z0-9_]+$/.test(sessionId)) {
+      return new Response(JSON.stringify({ paid: false, error: "Invalid sessionId" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      });
+    }
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2024-06-20" });
     const session = await stripe.checkout.sessions.retrieve(sessionId);
@@ -34,34 +39,55 @@ Deno.serve(async (req) => {
     const sourceUrl = session.metadata?.sourceUrl ?? "";
     const personaName = session.metadata?.personaName ?? "Tony";
 
-    // Fire-and-forget the email send so the UI returns fast.
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, serviceKey);
+
     if (email && publicId) {
-      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-      const supabase = createClient(
-        supabaseUrl,
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-      );
+      // Dedup by sessionId — bots can't loop verify-payment to re-send emails.
+      const { data: existing } = await supabase
+        .from("email_send_log")
+        .select("id")
+        .eq("recipient_email", email)
+        .eq("template_name", "rewrite-download")
+        .ilike("error_message", `session:${sessionId}%`)
+        .maybeSingle();
 
-      const downloadUrl = `${supabaseUrl}/functions/v1/download-html?session=${encodeURIComponent(sessionId)}`;
-
-      // Idempotency: don't send twice for the same session.
-      const idempotencyKey = `rewrite-download:${sessionId}`;
-
-      try {
-        await supabase.functions.invoke("send-transactional-email", {
-          body: {
-            templateName: "rewrite-download",
-            recipientEmail: email,
-            idempotencyKey,
-            templateData: {
-              downloadUrl,
-              sourceUrl: sourceUrl || "your landing",
-              personaName: personaName || "Tony",
+      if (!existing) {
+        const downloadUrl = `${supabaseUrl}/functions/v1/download-html?session=${encodeURIComponent(sessionId)}`;
+        try {
+          const sendResp = await fetch(`${supabaseUrl}/functions/v1/send-transactional-email`, {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${serviceKey}`,
+              "apikey": serviceKey,
+              "Content-Type": "application/json",
             },
-          },
-        });
-      } catch (e) {
-        console.error("Failed to enqueue download email", e);
+            body: JSON.stringify({
+              templateName: "rewrite-download",
+              recipientEmail: email,
+              idempotencyKey: `rewrite-download:${sessionId}`,
+              templateData: {
+                downloadUrl,
+                sourceUrl: sourceUrl || "your landing",
+                personaName: personaName || "Tony",
+              },
+            }),
+          });
+          if (!sendResp.ok) {
+            console.error("send-transactional-email failed", sendResp.status, await sendResp.text());
+          } else {
+            await supabase.from("email_send_log").insert({
+              message_id: crypto.randomUUID(),
+              template_name: "rewrite-download",
+              recipient_email: email,
+              status: "queued",
+              error_message: `session:${sessionId}`,
+            });
+          }
+        } catch (e) {
+          console.error("Failed to send download email", e);
+        }
       }
     }
 
