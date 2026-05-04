@@ -99,7 +99,7 @@ export const PHOTO_OVERRIDES: Record<string, string> = {
 };
 
 const memCache = new Map<string, string | null>();
-const STORAGE_KEY = "liketony.photoCache.v2";
+const STORAGE_KEY = "liketony.photoCache.v3";
 
 function loadStorage(): Record<string, string | null> {
   try {
@@ -168,12 +168,14 @@ async function fetchSummary(slug: string) {
   }
 }
 
-async function fetchPersonPhoto(slug: string): Promise<string | null> {
+async function fetchPersonPhoto(slug: string, trusted = false): Promise<string | null> {
   const data = await fetchSummary(slug);
   if (!data) return null;
   const photo: string | null = data?.thumbnail?.source ?? data?.originalimage?.source ?? null;
   if (!photo) return null;
-  if (!looksLikePersonSummary(data)) return null;
+  // For explicit slugs (hand-mapped or wikiTitle) trust the photo.
+  // Only run the non-person filter when guessing from a name/search.
+  if (!trusted && !looksLikePersonSummary(data)) return null;
   return photo;
 }
 
@@ -189,7 +191,7 @@ async function searchWikipediaPhoto(query: string): Promise<string | null> {
     const data = await res.json();
     const hits: { title: string }[] = data?.query?.search ?? [];
     for (const hit of hits) {
-      const photo = await fetchPersonPhoto(hit.title.replace(/\s+/g, "_"));
+      const photo = await fetchPersonPhoto(hit.title.replace(/\s+/g, "_"), false);
       if (photo) return photo;
     }
     return null;
@@ -215,15 +217,15 @@ export async function fetchPersonaPhoto(
   const p = (async () => {
     try {
       // Priority: explicit wikiTitle → hand-mapped slug → name → Wikipedia search.
-      const candidates: string[] = [];
-      if (wikiTitle) candidates.push(wikiTitle.replace(/\s+/g, "_"));
-      if (WIKI_SLUGS[personaId]) candidates.push(WIKI_SLUGS[personaId]);
+      const candidates: { slug: string; trusted: boolean }[] = [];
+      if (wikiTitle) candidates.push({ slug: wikiTitle.replace(/\s+/g, "_"), trusted: true });
+      if (WIKI_SLUGS[personaId]) candidates.push({ slug: WIKI_SLUGS[personaId], trusted: true });
       const nameSlug = name.replace(/\s+/g, "_");
-      if (!candidates.includes(nameSlug)) candidates.push(nameSlug);
+      if (!candidates.find((c) => c.slug === nameSlug)) candidates.push({ slug: nameSlug, trusted: false });
 
       let photo: string | null = null;
-      for (const slug of candidates) {
-        photo = await fetchPersonPhoto(slug);
+      for (const c of candidates) {
+        photo = await fetchPersonPhoto(c.slug, c.trusted);
         if (photo) break;
       }
       if (!photo) photo = await searchWikipediaPhoto(name);
