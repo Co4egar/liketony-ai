@@ -21,7 +21,20 @@ export function SubscriptionGate({ open, onOpenChange, onSubscribed }: Props) {
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [waitingPayment, setWaitingPayment] = useState(false);
+  const [resendIn, setResendIn] = useState(0);
   const pollRef = useRef<number | null>(null);
+  const cooldownRef = useRef<number | null>(null);
+
+  const startCooldown = (sec = 60) => {
+    setResendIn(sec);
+    if (cooldownRef.current) window.clearInterval(cooldownRef.current);
+    cooldownRef.current = window.setInterval(() => {
+      setResendIn((s) => {
+        if (s <= 1) { if (cooldownRef.current) window.clearInterval(cooldownRef.current); return 0; }
+        return s - 1;
+      });
+    }, 1000);
+  };
 
   const stopPolling = () => {
     if (pollRef.current) { window.clearInterval(pollRef.current); pollRef.current = null; }
