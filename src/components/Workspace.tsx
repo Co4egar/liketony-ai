@@ -7,7 +7,6 @@ import {
   RefreshCw,
   ChevronLeft,
   Check,
-  Lock,
 } from "lucide-react";
 import { Persona } from "@/data/personas";
 import { Button } from "@/components/ui/button";
@@ -22,8 +21,6 @@ import { enhancePreviewHtml } from "@/lib/preview-html";
 import { usePersonaUsage } from "@/hooks/usePersonaUsage";
 import { getPersonaStages } from "@/lib/persona-stages";
 import { TrendingUp } from "lucide-react";
-import { useSubscription } from "@/hooks/useSubscription";
-import { SubscriptionGate } from "./SubscriptionGate";
 
 interface Props {
   initialUrl: string;
@@ -51,18 +48,27 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
   const [changingPersona, setChangingPersona] = useState(false);
   const reqRef = useRef(0);
   const usage = usePersonaUsage();
-  const { subscribed, refresh: refreshSub } = useSubscription();
-  const [gateOpen, setGateOpen] = useState(false);
+  const [paying, setPaying] = useState(false);
 
-  // Auto-recheck after returning from Stripe checkout
+  // Auto-download after returning from Stripe checkout
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get("subscription") === "success") {
-      toast.success("Subscription activated!");
-      refreshSub();
+    const sessionId = params.get("paid");
+    if (sessionId && sessionId !== "cancel") {
+      (async () => {
+        const { data } = await supabase.functions.invoke("verify-payment", { body: { sessionId } });
+        if (data?.paid) {
+          toast.success("Payment confirmed! Your download is ready.");
+          sessionStorage.setItem("liketony_paid", "1");
+        } else {
+          toast.error("Payment not confirmed");
+        }
+        window.history.replaceState({}, "", window.location.pathname);
+      })();
+    } else if (sessionId === "cancel") {
       window.history.replaceState({}, "", window.location.pathname);
     }
-  }, [refreshSub]);
+  }, []);
   const personaCount = usage[persona.id] ?? 0;
 
   const loading = pending !== null;
@@ -147,13 +153,25 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
     URL.revokeObjectURL(a.href);
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!result) return;
-    if (!subscribed) {
-      setGateOpen(true);
+    if (sessionStorage.getItem("liketony_paid") === "1") {
+      sessionStorage.removeItem("liketony_paid");
+      performDownload();
       return;
     }
-    performDownload();
+    setPaying(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-checkout", {
+        body: { publicId: result.publicId },
+      });
+      if (error) throw error;
+      if (!data?.url) throw new Error("No checkout URL");
+      window.location.href = data.url;
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to start checkout");
+      setPaying(false);
+    }
   };
 
   const handleShare = async () => {
@@ -266,9 +284,10 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
 
           {result && !changingPersona && (
             <div className="space-y-2 pt-2 border-t border-border/60">
-              <Button onClick={handleDownload} className="w-full justify-start gap-2" variant="secondary">
-                {subscribed ? <Download className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
-                Download HTML {!subscribed && <span className="ml-auto text-[10px] uppercase tracking-wider text-muted-foreground">Pro</span>}
+              <Button onClick={handleDownload} disabled={paying} className="w-full justify-start gap-2" variant="secondary">
+                {paying ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                Download HTML
+                <span className="ml-auto text-[10px] uppercase tracking-wider text-muted-foreground">$19</span>
               </Button>
               <div className="text-xs text-muted-foreground pt-2">
                 Rewrote {result.rewrittenCount} / {result.segmentCount} segments.
@@ -360,11 +379,6 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
           </>
         )}
       </main>
-      <SubscriptionGate
-        open={gateOpen}
-        onOpenChange={setGateOpen}
-        onSubscribed={() => { refreshSub(); performDownload(); }}
-      />
     </div>
   );
 });
