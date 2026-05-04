@@ -21,6 +21,8 @@ import { enhancePreviewHtml } from "@/lib/preview-html";
 import { usePersonaUsage } from "@/hooks/usePersonaUsage";
 import { getPersonaStages } from "@/lib/persona-stages";
 import { TrendingUp } from "lucide-react";
+import { useSubscription } from "@/hooks/useSubscription";
+import { SubscriptionGate } from "./SubscriptionGate";
 
 interface Props {
   initialUrl: string;
@@ -48,6 +50,18 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
   const [changingPersona, setChangingPersona] = useState(false);
   const reqRef = useRef(0);
   const usage = usePersonaUsage();
+  const { subscribed, refresh: refreshSub } = useSubscription();
+  const [gateOpen, setGateOpen] = useState(false);
+
+  // Auto-recheck after returning from Stripe checkout
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("subscription") === "success") {
+      toast.success("Subscription activated!");
+      refreshSub();
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, [refreshSub]);
   const personaCount = usage[persona.id] ?? 0;
 
   const loading = pending !== null;
@@ -117,7 +131,7 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
     setPending({ url: targetUrl, persona: targetPersona, intensity: targetIntensity });
   };
 
-  const handleDownload = () => {
+  const performDownload = () => {
     if (!result) return;
     const blob = new Blob([result.htmlRewritten], { type: "text/html" });
     const a = document.createElement("a");
@@ -130,6 +144,15 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
     a.click();
     a.remove();
     URL.revokeObjectURL(a.href);
+  };
+
+  const handleDownload = () => {
+    if (!result) return;
+    if (!subscribed) {
+      setGateOpen(true);
+      return;
+    }
+    performDownload();
   };
 
   const handleShare = async () => {
