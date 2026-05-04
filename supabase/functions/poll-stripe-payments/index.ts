@@ -37,7 +37,7 @@ Deno.serve(async (_req) => {
         .maybeSingle();
       if (existing) { skipped++; continue; }
 
-      const downloadUrl = `${supabaseUrl}/functions/v1/download-html?session=${encodeURIComponent(session.id)}`;
+      const downloadUrl = `https://liketony.ai/d?session=${encodeURIComponent(session.id)}`;
       const sourceUrl = session.metadata?.sourceUrl ?? "";
       const personaName = session.metadata?.personaName ?? "Tony";
 
