@@ -11,6 +11,7 @@ const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 const SharedRewrite = lazy(() => import("./pages/SharedRewrite.tsx"));
 const WhyItMatters = lazy(() => import("./pages/WhyItMatters.tsx"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe.tsx"));
+const Download = lazy(() => import("./pages/Download.tsx"));
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/r/:publicId" element={<SharedRewrite />} />
             <Route path="/why-it-matters" element={<WhyItMatters />} />
             <Route path="/unsubscribe" element={<Unsubscribe />} />
+            <Route path="/d" element={<Download />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
