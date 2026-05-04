@@ -270,9 +270,7 @@ Deno.serve(async (req) => {
     const originalPreview = prepareStaticPreviewHtml(html, url);
 
     // Persist for share link.
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, serviceKey);
+    const supabase = supabaseAdmin;
     const publicId = generatePublicId();
     const { error: insertErr } = await supabase.from("rewrites").insert({
       public_id: publicId,
