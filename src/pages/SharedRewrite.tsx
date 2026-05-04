@@ -25,9 +25,7 @@ const SharedRewrite = () => {
     document.title = "LikeTony.ai — Shared rewrite";
     (async () => {
       const { data, error } = await supabase
-        .from("rewrites")
-        .select("source_url, persona_name, persona_id, html_rewritten, html_original, created_at")
-        .eq("public_id", publicId)
+        .rpc("get_rewrite_by_public_id", { p_public_id: publicId })
         .maybeSingle();
       if (error || !data) {
         setError("This rewrite was not found.");

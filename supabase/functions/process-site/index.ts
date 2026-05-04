@@ -214,6 +214,49 @@ Deno.serve(async (req) => {
       return json({ error: "url and persona required" }, 400);
     }
 
+    // Determine client identity: logged-in users bypass IP rate limit.
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseAdmin = createClient(supabaseUrl, serviceKey);
+
+    let userId: string | null = null;
+    const authHeader = req.headers.get("Authorization");
+    if (authHeader?.startsWith("Bearer ")) {
+      const token = authHeader.replace("Bearer ", "");
+      // Skip if it's just the anon key (no real session)
+      if (token !== anonKey) {
+        const { data: userData } = await supabaseAdmin.auth.getUser(token);
+        userId = userData.user?.id ?? null;
+      }
+    }
+
+    const ip =
+      req.headers.get("cf-connecting-ip") ||
+      req.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
+      "unknown";
+
+    const { data: rateData, error: rateErr } = await supabaseAdmin.rpc(
+      "check_and_record_rate_limit",
+      {
+        p_ip: ip,
+        p_action: "rewrite",
+        p_limit: 3,
+        p_window_minutes: 60,
+        p_user_id: userId,
+      },
+    );
+    if (rateErr) console.error("rate limit check failed:", rateErr);
+    if (rateData && (rateData as { allowed: boolean }).allowed === false) {
+      return json(
+        {
+          error: "rate_limited",
+          message: "Free limit reached: 3 rewrites per hour. Sign in with Pro to continue.",
+        },
+        429,
+      );
+    }
+
     const url = normalizeUrl(body.url);
     const html = await scrape(url);
     const { template, segments } = extractSegments(html);
@@ -227,9 +270,7 @@ Deno.serve(async (req) => {
     const originalPreview = prepareStaticPreviewHtml(html, url);
 
     // Persist for share link.
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, serviceKey);
+    const supabase = supabaseAdmin;
     const publicId = generatePublicId();
     const { error: insertErr } = await supabase.from("rewrites").insert({
       public_id: publicId,
