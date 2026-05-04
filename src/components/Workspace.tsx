@@ -360,6 +360,11 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
           </>
         )}
       </main>
+      <SubscriptionGate
+        open={gateOpen}
+        onOpenChange={setGateOpen}
+        onSubscribed={() => { refreshSub(); performDownload(); }}
+      />
     </div>
   );
 });
