@@ -28,13 +28,12 @@ Deno.serve(async (_req) => {
       const email = session.customer_details?.email ?? session.customer_email ?? null;
       const publicId = session.metadata?.publicId ?? null;
       if (!email || !publicId) { skipped++; continue; }
+      const messageId = `rewrite-download:${session.id}`;
 
       const { data: existing } = await supabase
         .from("email_send_log")
         .select("id")
-        .eq("recipient_email", email)
-        .eq("template_name", "rewrite-download")
-        .ilike("error_message", `session:${session.id}%`)
+        .eq("message_id", messageId)
         .maybeSingle();
       if (existing) { skipped++; continue; }
 
@@ -52,6 +51,7 @@ Deno.serve(async (_req) => {
         body: JSON.stringify({
           templateName: "rewrite-download",
           recipientEmail: email,
+          messageId,
           idempotencyKey: `rewrite-download:${session.id}`,
           templateData: {
             downloadUrl,
@@ -67,7 +67,7 @@ Deno.serve(async (_req) => {
       }
 
       await supabase.from("email_send_log").insert({
-        message_id: crypto.randomUUID(),
+        message_id: messageId,
         template_name: "rewrite-download",
         recipient_email: email,
         status: "queued",
