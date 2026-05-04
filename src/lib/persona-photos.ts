@@ -99,7 +99,7 @@ export const PHOTO_OVERRIDES: Record<string, string> = {
 };
 
 const memCache = new Map<string, string | null>();
-const STORAGE_KEY = "liketony.photoCache.v2";
+const STORAGE_KEY = "liketony.photoCache.v3";
 
 function loadStorage(): Record<string, string | null> {
   try {
