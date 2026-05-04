@@ -278,6 +278,7 @@ export type Database = {
         }
         Returns: Json
       }
+      cleanup_old_data: { Args: never; Returns: undefined }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean

@@ -1,4 +1,5 @@
 import Stripe from "npm:stripe@14.21.0";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,14 +14,57 @@ Deno.serve(async (req) => {
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not configured");
 
     const { publicId, sourceUrl, personaName } = await req.json().catch(() => ({}));
-    if (!publicId) throw new Error("publicId required");
+    if (!publicId || typeof publicId !== "string" || publicId.length > 64 || !/^[A-Za-z0-9_-]+$/.test(publicId)) {
+      return new Response(JSON.stringify({ error: "Invalid publicId" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      });
+    }
+
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+
+    // Validate publicId actually exists — prevents bots from spamming Stripe with fake IDs.
+    const { data: rewrite } = await supabase
+      .from("rewrites")
+      .select("public_id, source_url, persona_name")
+      .eq("public_id", publicId)
+      .maybeSingle();
+    if (!rewrite) {
+      return new Response(JSON.stringify({ error: "Rewrite not found" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 404,
+      });
+    }
+
+    // IP rate limit: 20 checkout sessions per hour per IP.
+    const ip =
+      req.headers.get("cf-connecting-ip") ||
+      req.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
+      "unknown";
+    const { data: rate } = await supabase.rpc("check_and_record_rate_limit", {
+      p_ip: `ip:${ip}`,
+      p_action: "create-checkout",
+      p_limit: 20,
+      p_window_minutes: 60,
+      p_user_id: null,
+    });
+    if (rate && (rate as { allowed: boolean }).allowed === false) {
+      return new Response(JSON.stringify({ error: "Too many checkout attempts. Try later." }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 429,
+      });
+    }
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2024-06-20" });
     const origin = req.headers.get("origin") ?? "";
+    const safeSourceUrl = (sourceUrl ?? rewrite.source_url ?? "").toString().slice(0, 500);
+    const safePersonaName = (personaName ?? rewrite.persona_name ?? "").toString().slice(0, 80);
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
-      // Stripe Checkout will collect the email on the hosted page automatically.
       billing_address_collection: "auto",
       line_items: [
         {
@@ -29,8 +73,8 @@ Deno.serve(async (req) => {
             unit_amount: 1900,
             product_data: {
               name: "LikeTony.ai — HTML download",
-              description: sourceUrl
-                ? `Rewritten landing for ${sourceUrl}`
+              description: safeSourceUrl
+                ? `Rewritten landing for ${safeSourceUrl}`
                 : "One-time access to download your rewritten landing HTML.",
             },
           },
@@ -39,8 +83,8 @@ Deno.serve(async (req) => {
       ],
       metadata: {
         publicId,
-        sourceUrl: sourceUrl ?? "",
-        personaName: personaName ?? "",
+        sourceUrl: safeSourceUrl,
+        personaName: safePersonaName,
       },
       success_url: `${origin}/?paid={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/?paid=cancel`,
