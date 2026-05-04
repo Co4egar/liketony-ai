@@ -143,49 +143,55 @@ export function PersonaCatalog({ selectedId, onSelect, layout = "grid" }: Props)
         ))}
       </div>
 
-      <div
+      <ul
         className={cn(
           layout === "grid"
-            ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2"
-            : "flex flex-col gap-1.5",
+            ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 list-none p-0 m-0"
+            : "flex flex-col gap-1.5 list-none p-0 m-0",
         )}
+        role="list"
+        aria-label="Personas"
       >
         {filtered.map((p) => {
           const count = usage[p.id] ?? 0;
+          const isSelected = selectedId === p.id;
           return (
-            <button
-              key={p.id}
-              onClick={() => onSelect(p)}
-              className={cn(
-                "group text-left rounded-xl border px-3 py-2.5 transition-all bg-card/40 hover:bg-card/80 flex items-center gap-3",
-                selectedId === p.id
-                  ? "border-primary/70 bg-card ring-1 ring-primary/40"
-                  : "border-border/60",
-              )}
-            >
-              <PersonaAvatar persona={p} />
-              <div className="min-w-0 flex-1">
-                <div className="font-display font-semibold text-foreground text-sm truncate">{p.name}</div>
-                <div className="text-xs text-muted-foreground truncate mt-0.5">{p.shortBio}</div>
-              </div>
-              {count > 0 && (
-                <span
-                  className="shrink-0 inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/60 px-2 py-0.5 text-[10px] font-medium text-muted-foreground tabular-nums"
-                  title={`Used ${count.toLocaleString()} times`}
-                >
-                  <TrendingUp className="w-3 h-3" />
-                  {count.toLocaleString()}
-                </span>
-              )}
-            </button>
+            <li key={p.id}>
+              <button
+                type="button"
+                onClick={() => onSelect(p)}
+                aria-pressed={isSelected}
+                className={cn(
+                  "group w-full text-left rounded-xl border px-3 py-2.5 transition-all bg-card/40 hover:bg-card/80 flex items-center gap-3",
+                  isSelected
+                    ? "border-primary/70 bg-card ring-1 ring-primary/40"
+                    : "border-border/60",
+                )}
+              >
+                <PersonaAvatar persona={p} />
+                <div className="min-w-0 flex-1">
+                  <div className="font-display font-semibold text-foreground text-sm truncate">{p.name}</div>
+                  <div className="text-xs text-muted-foreground truncate mt-0.5">{p.shortBio}</div>
+                </div>
+                {count > 0 && (
+                  <span
+                    className="shrink-0 inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/60 px-2 py-0.5 text-[10px] font-medium text-muted-foreground tabular-nums"
+                    title={`Used ${count.toLocaleString()} times`}
+                  >
+                    <TrendingUp className="w-3 h-3" aria-hidden="true" />
+                    {count.toLocaleString()}
+                  </span>
+                )}
+              </button>
+            </li>
           );
         })}
         {filtered.length === 0 && (
-          <div className="text-center text-muted-foreground py-10 text-sm">
+          <li className="text-center text-muted-foreground py-10 text-sm col-span-full">
             No personas match. Try a different search or add a custom one above.
-          </div>
+          </li>
         )}
-      </div>
+      </ul>
     </div>
   );
 }
