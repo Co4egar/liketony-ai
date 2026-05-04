@@ -130,8 +130,8 @@ export function SubscriptionGate({ open, onOpenChange, onSubscribed }: Props) {
             <div className="space-y-3">
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" autoFocus value={email} onChange={(e) => setEmail(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && sendCode()} placeholder="you@example.com" />
-              <Button onClick={sendCode} disabled={loading || !email} className="w-full">
+                onKeyDown={(e) => e.key === "Enter" && sendCode(false)} placeholder="you@example.com" />
+              <Button onClick={() => sendCode(false)} disabled={loading || !email} className="w-full">
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send code"}
               </Button>
             </div>
@@ -141,7 +141,7 @@ export function SubscriptionGate({ open, onOpenChange, onSubscribed }: Props) {
           <>
             <DialogHeader>
               <DialogTitle>Enter verification code</DialogTitle>
-              <DialogDescription>Sent to {email}</DialogDescription>
+              <DialogDescription>Sent to {email}. Use the most recent code if you requested several.</DialogDescription>
             </DialogHeader>
             <div className="space-y-3">
               <Label htmlFor="code">6-digit code</Label>
@@ -150,6 +150,13 @@ export function SubscriptionGate({ open, onOpenChange, onSubscribed }: Props) {
               <Button onClick={verifyCode} disabled={loading || !code} className="w-full">
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Verify"}
               </Button>
+              <button
+                onClick={() => sendCode(true)}
+                disabled={resendIn > 0 || loading}
+                className="text-xs text-muted-foreground hover:underline w-full disabled:opacity-50"
+              >
+                {resendIn > 0 ? `Resend code in ${resendIn}s` : "Resend code"}
+              </button>
               <button onClick={() => setStep("email")} className="text-xs text-muted-foreground hover:underline w-full">
                 Use a different email
               </button>
