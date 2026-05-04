@@ -90,10 +90,12 @@ export const WIKI_SLUGS: Record<string, string> = {
 // These take priority over WIKI_SLUGS lookup.
 import hormoziPortrait from "@/assets/persona-hormozi.webp";
 import bugsBunnyPortrait from "@/assets/persona-bugs-bunny.jpg";
+import robbinsPortrait from "@/assets/persona-robbins.jpg";
 
 export const PHOTO_OVERRIDES: Record<string, string> = {
   hormozi: hormoziPortrait,
   "bugs-bunny": bugsBunnyPortrait,
+  robbins: robbinsPortrait,
 };
 
 const memCache = new Map<string, string | null>();
