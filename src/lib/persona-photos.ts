@@ -191,7 +191,7 @@ async function searchWikipediaPhoto(query: string): Promise<string | null> {
     const data = await res.json();
     const hits: { title: string }[] = data?.query?.search ?? [];
     for (const hit of hits) {
-      const photo = await fetchPersonPhoto(hit.title.replace(/\s+/g, "_"));
+      const photo = await fetchPersonPhoto(hit.title.replace(/\s+/g, "_"), false);
       if (photo) return photo;
     }
     return null;
