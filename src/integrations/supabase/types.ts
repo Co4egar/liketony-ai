@@ -98,6 +98,27 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limits: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          ip: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          ip: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          ip?: string
+        }
+        Relationships: []
+      }
       rewrites: {
         Row: {
           created_at: string
@@ -136,6 +157,28 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_and_record_rate_limit: {
+        Args: {
+          p_action: string
+          p_ip: string
+          p_limit: number
+          p_user_id?: string
+          p_window_minutes: number
+        }
+        Returns: Json
+      }
+      get_rewrite_by_public_id: {
+        Args: { p_public_id: string }
+        Returns: {
+          created_at: string
+          html_original: string
+          html_rewritten: string
+          persona_id: string
+          persona_name: string
+          public_id: string
+          source_url: string
+        }[]
+      }
       increment_persona_usage: {
         Args: { p_persona_id: string }
         Returns: number
