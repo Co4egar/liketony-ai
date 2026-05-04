@@ -7,6 +7,7 @@ import {
   RefreshCw,
   ChevronLeft,
   Check,
+  Lock,
 } from "lucide-react";
 import { Persona } from "@/data/personas";
 import { Button } from "@/components/ui/button";
@@ -266,7 +267,8 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
           {result && !changingPersona && (
             <div className="space-y-2 pt-2 border-t border-border/60">
               <Button onClick={handleDownload} className="w-full justify-start gap-2" variant="secondary">
-                <Download className="w-4 h-4" /> Download HTML
+                {subscribed ? <Download className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+                Download HTML {!subscribed && <span className="ml-auto text-[10px] uppercase tracking-wider text-muted-foreground">Pro</span>}
               </Button>
               <div className="text-xs text-muted-foreground pt-2">
                 Rewrote {result.rewrittenCount} / {result.segmentCount} segments.
@@ -426,6 +428,11 @@ function PreviewFrame({ srcDoc }: { srcDoc: string }) {
           }}
         />
       </div>
+      <SubscriptionGate
+        open={gateOpen}
+        onOpenChange={setGateOpen}
+        onSubscribed={() => { refreshSub(); performDownload(); }}
+      />
     </div>
   );
 }
