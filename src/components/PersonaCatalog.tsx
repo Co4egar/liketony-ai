@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import { Check, Search, Sparkles, Loader2, TrendingUp } from "lucide-react";
 import { CATEGORIES, PERSONAS, Persona, PersonaCategory } from "@/data/personas";
 import { Input } from "@/components/ui/input";
