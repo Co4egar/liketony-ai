@@ -236,14 +236,16 @@ Deno.serve(async (req) => {
       req.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
       "unknown";
 
+    // Identify by user_id when logged in, otherwise by IP. Limit: 20 per hour.
+    const rateKey = userId ? `user:${userId}` : `ip:${ip}`;
     const { data: rateData, error: rateErr } = await supabaseAdmin.rpc(
       "check_and_record_rate_limit",
       {
-        p_ip: ip,
+        p_ip: rateKey,
         p_action: "rewrite",
-        p_limit: 3,
+        p_limit: 20,
         p_window_minutes: 60,
-        p_user_id: userId,
+        p_user_id: null,
       },
     );
     if (rateErr) console.error("rate limit check failed:", rateErr);
@@ -251,7 +253,7 @@ Deno.serve(async (req) => {
       return json(
         {
           error: "rate_limited",
-          message: "Free limit reached: 3 rewrites per hour. Sign in with Pro to continue.",
+          message: "Limit reached: 20 rewrites per hour. Try again later.",
         },
         429,
       );
