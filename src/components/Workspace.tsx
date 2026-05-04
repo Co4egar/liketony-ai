@@ -228,6 +228,13 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
                 {changingPersona ? "Cancel" : "Change"}
               </button>
             </div>
+            {result && !changingPersona && (
+              <Button onClick={handleDownload} disabled={paying} className="w-full justify-start gap-2">
+                {paying ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                Download HTML
+                <span className="ml-auto text-[10px] uppercase tracking-wider opacity-80">$19</span>
+              </Button>
+            )}
             <div className="rounded-xl border border-border/60 bg-card/60 p-3 flex items-center gap-3">
               <PersonaAvatar persona={persona} />
               <div className="min-w-0 flex-1">
@@ -281,15 +288,8 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
           )}
 
           {result && !changingPersona && (
-            <div className="space-y-2 pt-2 border-t border-border/60">
-              <Button onClick={handleDownload} disabled={paying} className="w-full justify-start gap-2" variant="secondary">
-                {paying ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                Download HTML
-                <span className="ml-auto text-[10px] uppercase tracking-wider text-muted-foreground">$19</span>
-              </Button>
-              <div className="text-xs text-muted-foreground pt-2">
-                Rewrote {result.rewrittenCount} / {result.segmentCount} segments.
-              </div>
+            <div className="text-xs text-muted-foreground pt-2 border-t border-border/60">
+              Rewrote {result.rewrittenCount} / {result.segmentCount} segments.
             </div>
           )}
         </div>
