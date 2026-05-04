@@ -402,13 +402,29 @@ function PreviewFrame({ srcDoc }: { srcDoc: string }) {
       doc.body?.scrollHeight ?? 0,
       900,
     );
-    setContentH(h);
+    setContentH((prev) => (Math.abs(prev - h) > 2 ? h : prev));
+  };
+
+  // Observe iframe content for size changes instead of polling on an interval.
+  const handleIframeLoad = () => {
+    measure();
+    const doc = iframeRef.current?.contentDocument;
+    if (!doc?.body) return;
+    const ro = new ResizeObserver(() => measure());
+    ro.observe(doc.body);
+    if (doc.documentElement) ro.observe(doc.documentElement);
+    // Stash on iframe so we can disconnect on next load/unmount.
+    const prev = (iframeRef.current as any)?._ro as ResizeObserver | undefined;
+    prev?.disconnect();
+    (iframeRef.current as any)._ro = ro;
   };
 
   useEffect(() => {
-    const id = window.setInterval(measure, 600);
-    return () => window.clearInterval(id);
-  }, [srcDoc]);
+    return () => {
+      const ro = (iframeRef.current as any)?._ro as ResizeObserver | undefined;
+      ro?.disconnect();
+    };
+  }, []);
 
   return (
     <div ref={wrapRef} className="flex-1 overflow-auto bg-white">
@@ -425,7 +441,8 @@ function PreviewFrame({ srcDoc }: { srcDoc: string }) {
           title="Preview"
           srcDoc={srcDoc}
           sandbox="allow-same-origin allow-scripts allow-popups"
-          onLoad={measure}
+          loading="lazy"
+          onLoad={handleIframeLoad}
           style={{
             width: `${BASE_W}px`,
             height: `${contentH}px`,
