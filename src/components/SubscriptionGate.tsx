@@ -20,8 +20,17 @@ export function SubscriptionGate({ open, onOpenChange, onSubscribed }: Props) {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
+  const [waitingPayment, setWaitingPayment] = useState(false);
+  const pollRef = useRef<number | null>(null);
 
-  const reset = () => { setStep("email"); setEmail(""); setCode(""); };
+  const stopPolling = () => {
+    if (pollRef.current) { window.clearInterval(pollRef.current); pollRef.current = null; }
+    setWaitingPayment(false);
+  };
+
+  const reset = () => { stopPolling(); setStep("email"); setEmail(""); setCode(""); };
+
+  useEffect(() => () => stopPolling(), []);
 
   const sendCode = async () => {
     if (!email.trim()) return;
