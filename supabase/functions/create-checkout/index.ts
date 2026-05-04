@@ -86,7 +86,7 @@ Deno.serve(async (req) => {
         sourceUrl: safeSourceUrl,
         personaName: safePersonaName,
       },
-      success_url: `${origin}/?paid={CHECKOUT_SESSION_ID}`,
+      success_url: `${origin}/success?session={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/?paid=cancel`,
     });
 
