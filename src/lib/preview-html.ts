@@ -10,6 +10,15 @@ html,body{min-width:0!important;max-width:100%!important;overflow-x:hidden!impor
 .t-animate,[data-animate-style],[data-animate-style-res-320],[data-animate-style-res-360],[data-animate-style-res-480],[data-animate-style-res-640],[data-animate-style-res-960]{opacity:1!important;transform:none!important;transition:none!important;}
 .t396__artboard,.t396__carrier,.t396__filter{overflow:hidden!important;}
 img[data-original]{visibility:visible!important;opacity:1!important;}
+/* Hide site-level loaders/preloaders/spinners that get stuck inside our preview iframe */
+[class*="preloader"],[id*="preloader"],
+[class*="page-loader"],[class*="site-loader"],
+[class*="loader-overlay"],[class*="loading-overlay"],
+.t-cover__filter-spinner,.t-store__prod-popup__loader,.t-feed__post-popup__loader,
+.t-records-loader,.t-records__loader,.t396__loader,.tn-atom__loader,
+[class*="spinner"]:not(button):not([class*="t-input"]):not([class*="t-form"]):not([class*="t-btn"]){
+  display:none!important;visibility:hidden!important;opacity:0!important;animation:none!important;
+}
 </style><script id="liketony-runtime-text-fit">
 (function(){
   function each(list,fn){Array.prototype.forEach.call(list,fn);}
