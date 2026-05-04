@@ -41,11 +41,6 @@ const getAuthHeaders = async (headers?: Record<string, string>) => {
   return { ...headers, Authorization: `Bearer ${session.access_token}` };
 };
 
-const showCheckoutLoading = (checkoutWindow?: Window | null) => {
-  if (!checkoutWindow || checkoutWindow.closed) return;
-  checkoutWindow.document.write("<!doctype html><title>Opening checkout</title><body style='font-family:system-ui,sans-serif;padding:32px'>Opening Stripe checkout…</body>");
-  checkoutWindow.document.close();
-};
 
 export function SubscriptionGate({ open, onOpenChange, onSubscribed }: Props) {
   const [step, setStep] = useState<Step>("email");
@@ -98,8 +93,6 @@ export function SubscriptionGate({ open, onOpenChange, onSubscribed }: Props) {
 
   const verifyCode = async () => {
     if (!code.trim()) return;
-    const checkoutWindow = window.open("", "_blank");
-    showCheckoutLoading(checkoutWindow);
     setLoading(true);
     try {
       const { data: authData, error } = await supabase.auth.verifyOtp({
@@ -119,59 +112,36 @@ export function SubscriptionGate({ open, onOpenChange, onSubscribed }: Props) {
       const { data, error: subscriptionError } = await invokeWithTimeout<{ subscribed?: boolean }>("check-subscription", 15000, { headers, body: {} });
       if (subscriptionError) throw subscriptionError;
       if (data?.subscribed) {
-        checkoutWindow?.close();
         toast.success("Welcome back! Subscription active");
         onSubscribed();
         onOpenChange(false);
         reset();
       } else {
-        toast.info("Opening checkout...");
         setStep("paywall");
-        await startCheckout(checkoutWindow, headers);
+        await startCheckout(headers);
       }
     } catch (e) {
-      checkoutWindow?.close();
       toast.error(e instanceof Error ? e.message : "Invalid code");
     } finally { setLoading(false); }
   };
 
-  const startCheckout = async (checkoutWindow?: Window | null, headers?: Record<string, string>) => {
-    showCheckoutLoading(checkoutWindow);
+  const startCheckout = async (headers?: Record<string, string>) => {
     const authHeaders = await getAuthHeaders(headers);
-    const { data, error } = await invokeWithTimeout<{ url?: string }>("create-checkout", 15000, { headers: authHeaders, body: {} });
+    toast.info("Redirecting to Stripe...");
+    const { data, error } = await invokeWithTimeout<{ url?: string; error?: string }>("create-checkout", 20000, { headers: authHeaders, body: {} });
     if (error) throw error;
-    if (!data?.url) throw new Error("Checkout URL was not returned");
-
-    if (checkoutWindow && !checkoutWindow.closed) {
-      checkoutWindow.location.href = data.url;
-    } else {
-      const opened = window.open(data.url, "_blank");
-      if (!opened) window.location.href = data.url;
-    }
-
-    setWaitingPayment(true);
-    pollRef.current = window.setInterval(async () => {
-      const { data: sub } = await invokeWithTimeout<{ subscribed?: boolean }>("check-subscription", 10000, { headers: authHeaders, body: {} });
-      if (sub?.subscribed) {
-        stopPolling();
-        toast.success("Payment confirmed! Downloading...");
-        onSubscribed();
-        onOpenChange(false);
-        reset();
-      }
-    }, 3000);
+    if (!data?.url) throw new Error(data?.error || "Checkout URL was not returned");
+    window.location.href = data.url;
   };
 
   const goCheckout = async () => {
-    const checkoutWindow = window.open("", "_blank");
-    showCheckoutLoading(checkoutWindow);
     setLoading(true);
     try {
-      await startCheckout(checkoutWindow);
+      await startCheckout();
     } catch (e) {
-      checkoutWindow?.close();
       toast.error(e instanceof Error ? e.message : "Failed to start checkout");
-    } finally { setLoading(false); }
+      setLoading(false);
+    }
   };
 
   return (
