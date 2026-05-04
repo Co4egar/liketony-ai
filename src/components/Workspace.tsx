@@ -7,6 +7,7 @@ import {
   RefreshCw,
   ChevronLeft,
   Check,
+  ChevronDown,
 } from "lucide-react";
 import { Persona } from "@/data/personas";
 import { Button } from "@/components/ui/button";
@@ -49,6 +50,7 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
   const reqRef = useRef(0);
   const usage = usePersonaUsage();
   const [paying, setPaying] = useState(false);
+  const [mobileExpanded, setMobileExpanded] = useState(false);
 
   // Show confirmation after returning from Stripe checkout
   useEffect(() => {
