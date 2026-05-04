@@ -228,6 +228,13 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
                 {changingPersona ? "Cancel" : "Change"}
               </button>
             </div>
+            {result && !changingPersona && (
+              <Button onClick={handleDownload} disabled={paying} className="w-full justify-start gap-2">
+                {paying ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                Download HTML
+                <span className="ml-auto text-[10px] uppercase tracking-wider opacity-80">$19</span>
+              </Button>
+            )}
             <div className="rounded-xl border border-border/60 bg-card/60 p-3 flex items-center gap-3">
               <PersonaAvatar persona={persona} />
               <div className="min-w-0 flex-1">
