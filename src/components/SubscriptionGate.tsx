@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,8 +20,17 @@ export function SubscriptionGate({ open, onOpenChange, onSubscribed }: Props) {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
+  const [waitingPayment, setWaitingPayment] = useState(false);
+  const pollRef = useRef<number | null>(null);
 
-  const reset = () => { setStep("email"); setEmail(""); setCode(""); };
+  const stopPolling = () => {
+    if (pollRef.current) { window.clearInterval(pollRef.current); pollRef.current = null; }
+    setWaitingPayment(false);
+  };
+
+  const reset = () => { stopPolling(); setStep("email"); setEmail(""); setCode(""); };
+
+  useEffect(() => () => stopPolling(), []);
 
   const sendCode = async () => {
     if (!email.trim()) return;
@@ -69,7 +78,21 @@ export function SubscriptionGate({ open, onOpenChange, onSubscribed }: Props) {
     try {
       const { data, error } = await supabase.functions.invoke("create-checkout");
       if (error) throw error;
-      if (data?.url) window.open(data.url, "_blank");
+      if (data?.url) {
+        window.open(data.url, "_blank");
+        // Start polling for active subscription
+        setWaitingPayment(true);
+        pollRef.current = window.setInterval(async () => {
+          const { data: sub } = await supabase.functions.invoke("check-subscription");
+          if (sub?.subscribed) {
+            stopPolling();
+            toast.success("Payment confirmed! Downloading...");
+            onSubscribed();
+            onOpenChange(false);
+            reset();
+          }
+        }, 3000);
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to start checkout");
     } finally { setLoading(false); }
@@ -124,9 +147,14 @@ export function SubscriptionGate({ open, onOpenChange, onSubscribed }: Props) {
                 <div className="text-4xl font-bold">$19.99<span className="text-base font-normal text-muted-foreground">/mo</span></div>
                 <div className="text-xs text-muted-foreground mt-1">Cancel anytime</div>
               </div>
-              <Button onClick={goCheckout} disabled={loading} className="w-full" size="lg">
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Subscribe with Stripe"}
+              <Button onClick={goCheckout} disabled={loading || waitingPayment} className="w-full" size="lg">
+                {loading || waitingPayment ? <Loader2 className="w-4 h-4 animate-spin" /> : "Subscribe with Stripe"}
               </Button>
+              {waitingPayment && (
+                <p className="text-xs text-center text-muted-foreground">
+                  Waiting for payment confirmation... Complete checkout in the new tab.
+                </p>
+              )}
               <p className="text-xs text-muted-foreground text-center">
                 After payment, your subscription will be active for {email}.
               </p>
