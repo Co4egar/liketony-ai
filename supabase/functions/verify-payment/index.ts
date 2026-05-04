@@ -44,13 +44,12 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, serviceKey);
 
     if (email && publicId) {
+      const messageId = `rewrite-download:${sessionId}`;
       // Dedup by sessionId — bots can't loop verify-payment to re-send emails.
       const { data: existing } = await supabase
         .from("email_send_log")
         .select("id")
-        .eq("recipient_email", email)
-        .eq("template_name", "rewrite-download")
-        .ilike("error_message", `session:${sessionId}%`)
+        .eq("message_id", messageId)
         .maybeSingle();
 
       if (!existing) {
@@ -66,6 +65,7 @@ Deno.serve(async (req) => {
             body: JSON.stringify({
               templateName: "rewrite-download",
               recipientEmail: email,
+              messageId,
               idempotencyKey: `rewrite-download:${sessionId}`,
               templateData: {
                 downloadUrl,
@@ -78,7 +78,7 @@ Deno.serve(async (req) => {
             console.error("send-transactional-email failed", sendResp.status, await sendResp.text());
           } else {
             await supabase.from("email_send_log").insert({
-              message_id: crypto.randomUUID(),
+              message_id: messageId,
               template_name: "rewrite-download",
               recipient_email: email,
               status: "queued",
