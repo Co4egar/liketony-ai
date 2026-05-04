@@ -168,12 +168,14 @@ async function fetchSummary(slug: string) {
   }
 }
 
-async function fetchPersonPhoto(slug: string): Promise<string | null> {
+async function fetchPersonPhoto(slug: string, trusted = false): Promise<string | null> {
   const data = await fetchSummary(slug);
   if (!data) return null;
   const photo: string | null = data?.thumbnail?.source ?? data?.originalimage?.source ?? null;
   if (!photo) return null;
-  if (!looksLikePersonSummary(data)) return null;
+  // For explicit slugs (hand-mapped or wikiTitle) trust the photo.
+  // Only run the non-person filter when guessing from a name/search.
+  if (!trusted && !looksLikePersonSummary(data)) return null;
   return photo;
 }
 
