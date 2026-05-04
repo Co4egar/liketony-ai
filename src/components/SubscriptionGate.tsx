@@ -45,8 +45,9 @@ export function SubscriptionGate({ open, onOpenChange, onSubscribed }: Props) {
 
   useEffect(() => () => stopPolling(), []);
 
-  const sendCode = async () => {
+  const sendCode = async (isResend = false) => {
     if (!email.trim()) return;
+    if (isResend && resendIn > 0) return;
     setLoading(true);
     try {
       const { error } = await supabase.auth.signInWithOtp({
@@ -54,8 +55,10 @@ export function SubscriptionGate({ open, onOpenChange, onSubscribed }: Props) {
         options: { shouldCreateUser: true, emailRedirectTo: window.location.origin },
       });
       if (error) throw error;
-      toast.success("Code sent! Check your email");
+      toast.success("Code sent! Check your email (use the LATEST code)");
       setStep("otp");
+      setCode("");
+      startCooldown(60);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to send code");
     } finally { setLoading(false); }
@@ -70,8 +73,12 @@ export function SubscriptionGate({ open, onOpenChange, onSubscribed }: Props) {
         token: code.trim(),
         type: "email",
       });
-      if (error) throw error;
-      // Check subscription
+      if (error) {
+        if (error.message?.toLowerCase().includes("expired") || error.message?.toLowerCase().includes("invalid")) {
+          throw new Error("Code expired or invalid. Use the most recent code from your email, or request a new one.");
+        }
+        throw error;
+      }
       const { data } = await supabase.functions.invoke("check-subscription");
       if (data?.subscribed) {
         toast.success("Welcome back! Subscription active");
