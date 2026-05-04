@@ -206,7 +206,7 @@ export function PersonaCatalog({ selectedId, onSelect, layout = "grid" }: Props)
   );
 }
 
-function CategoryPill({
+const CategoryPill = memo(function CategoryPill({
   label,
   active,
   onClick,
@@ -228,4 +228,4 @@ function CategoryPill({
       {label}
     </button>
   );
-}
+});
