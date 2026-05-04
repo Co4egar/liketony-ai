@@ -196,10 +196,22 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
   return (
     <div ref={ref} className="fixed inset-0 z-30 flex flex-col sm:flex-row bg-background animate-fade-in">
       {/* Sidebar */}
-      <aside className="w-full sm:w-[340px] sm:h-full max-h-[55vh] sm:max-h-none border-b sm:border-b-0 sm:border-r border-border/60 bg-card/40 backdrop-blur flex flex-col shrink-0">
-        <div className="p-4 border-b border-border/60 flex items-center justify-between">
+      <aside className={cn(
+        "w-full sm:w-[340px] sm:h-full sm:max-h-none border-b sm:border-b-0 sm:border-r border-border/60 bg-card/40 backdrop-blur flex flex-col shrink-0",
+        mobileExpanded ? "max-h-[70vh]" : "max-h-none",
+      )}>
+        <div className="p-4 border-b border-border/60 flex items-center justify-between gap-2">
           <button onClick={onClose} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
             <ChevronLeft className="w-4 h-4" /> Home
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileExpanded((v) => !v)}
+            className="sm:hidden flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md border border-border/60"
+            aria-expanded={mobileExpanded}
+          >
+            {mobileExpanded ? "Hide options" : "Show options"}
+            <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", mobileExpanded && "rotate-180")} />
           </button>
           <div className="flex items-center gap-1.5">
             <div className="w-5 h-5 rounded bg-primary flex items-center justify-center">
@@ -209,7 +221,10 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
           </div>
         </div>
 
-        <div className="p-4 space-y-4 overflow-y-auto scrollbar-thin flex-1">
+        <div className={cn(
+          "p-4 space-y-4 overflow-y-auto scrollbar-thin flex-1",
+          mobileExpanded ? "block" : "hidden sm:block",
+        )}>
           <div className="space-y-2">
             <label className="text-xs uppercase tracking-wider text-muted-foreground">Domain</label>
             <DomainBar
