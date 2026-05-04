@@ -130,12 +130,12 @@ const WhyItMatters = () => {
                 <div className="flex items-center gap-3 mb-4">
                   <PersonaAvatar persona={p} size="md" />
                   <div className="min-w-0">
-                    <div className="font-display font-semibold text-lg leading-tight truncate">
+                    <h3 className="font-display font-semibold text-lg leading-tight truncate m-0">
                       {p.name}
-                    </div>
-                    <div className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground mt-0.5">
+                    </h3>
+                    <p className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground mt-0.5 m-0">
                       {p.category.replace("-", " ")}
-                    </div>
+                    </p>
                   </div>
                 </div>
                 <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
