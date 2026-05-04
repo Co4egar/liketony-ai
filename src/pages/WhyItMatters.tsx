@@ -203,18 +203,18 @@ function ValueCard({
   body: string;
 }) {
   return (
-    <div className="bg-card/40 p-7 sm:p-8 flex flex-col gap-4">
+    <article className="bg-card/40 p-7 sm:p-8 flex flex-col gap-4">
       <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-md bg-primary/15 text-primary flex items-center justify-center">
+        <div aria-hidden="true" className="w-9 h-9 rounded-md bg-primary/15 text-primary flex items-center justify-center">
           {icon}
         </div>
-        <div className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
+        <p className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground m-0">
           {kicker}
-        </div>
+        </p>
       </div>
-      <div className="font-display text-xl leading-snug font-medium">{title}</div>
-      <p className="text-sm text-muted-foreground leading-relaxed">{body}</p>
-    </div>
+      <h3 className="font-display text-xl leading-snug font-medium m-0">{title}</h3>
+      <p className="text-sm text-muted-foreground leading-relaxed m-0">{body}</p>
+    </article>
   );
 }
 
