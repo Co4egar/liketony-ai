@@ -144,9 +144,10 @@ export function SubscriptionGate({ open, onOpenChange, onSubscribed }: Props) {
               <DialogDescription>Sent to {email}. Use the most recent code if you requested several.</DialogDescription>
             </DialogHeader>
             <div className="space-y-3">
-              <Label htmlFor="code">6-digit code</Label>
-              <Input id="code" inputMode="numeric" autoFocus value={code} onChange={(e) => setCode(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && verifyCode()} placeholder="123456" maxLength={6} />
+              <Label htmlFor="code">Verification code</Label>
+              <Input id="code" inputMode="numeric" autoFocus value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+                onKeyDown={(e) => e.key === "Enter" && verifyCode()} placeholder="Enter code from email" maxLength={10} />
               <Button onClick={verifyCode} disabled={loading || !code} className="w-full">
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Verify"}
               </Button>
