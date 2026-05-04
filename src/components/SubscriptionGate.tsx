@@ -135,7 +135,7 @@ export function SubscriptionGate({ open, onOpenChange, onSubscribed }: Props) {
 
     setWaitingPayment(true);
     pollRef.current = window.setInterval(async () => {
-      const { data: sub } = await invokeWithTimeout<{ subscribed?: boolean }>("check-subscription", 10000);
+      const { data: sub } = await invokeWithTimeout<{ subscribed?: boolean }>("check-subscription", 10000, { headers });
       if (sub?.subscribed) {
         stopPolling();
         toast.success("Payment confirmed! Downloading...");
