@@ -284,9 +284,10 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
 
           {result && !changingPersona && (
             <div className="space-y-2 pt-2 border-t border-border/60">
-              <Button onClick={handleDownload} className="w-full justify-start gap-2" variant="secondary">
-                {subscribed ? <Download className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
-                Download HTML {!subscribed && <span className="ml-auto text-[10px] uppercase tracking-wider text-muted-foreground">Pro</span>}
+              <Button onClick={handleDownload} disabled={paying} className="w-full justify-start gap-2" variant="secondary">
+                {paying ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                Download HTML
+                <span className="ml-auto text-[10px] uppercase tracking-wider text-muted-foreground">$19</span>
               </Button>
               <div className="text-xs text-muted-foreground pt-2">
                 Rewrote {result.rewrittenCount} / {result.segmentCount} segments.
@@ -378,11 +379,6 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
           </>
         )}
       </main>
-      <SubscriptionGate
-        open={gateOpen}
-        onOpenChange={setGateOpen}
-        onSubscribed={() => { refreshSub(); performDownload(); }}
-      />
     </div>
   );
 });
