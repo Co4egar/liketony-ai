@@ -98,8 +98,8 @@ const WhyItMatters = () => {
                     {s.n}
                   </div>
                   <div className="flex-1">
-                    <div className="font-display text-xl font-medium mb-1.5">{s.t}</div>
-                    <div className="text-muted-foreground leading-relaxed">{s.d}</div>
+                    <h3 className="font-display text-xl font-medium mb-1.5">{s.t}</h3>
+                    <p className="text-muted-foreground leading-relaxed">{s.d}</p>
                   </div>
                 </li>
               ))}
