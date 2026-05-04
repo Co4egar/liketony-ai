@@ -86,17 +86,17 @@ const Index = () => {
               </div>
             </div>
 
-            <div className="relative rounded-xl border border-border bg-card/60 px-4 py-3 shadow-warm">
+            <aside aria-label="Selected voice" className="relative rounded-xl border border-border bg-card/60 px-4 py-3 shadow-warm">
               <div className="flex items-center gap-3">
                 <PersonaAvatar persona={persona} size="lg" />
                 <div className="min-w-0 flex-1">
-                  <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                  <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground m-0">
                     Voice selected
-                  </div>
-                  <div className="font-display font-semibold text-lg leading-tight truncate">
+                  </p>
+                  <p className="font-display font-semibold text-lg leading-tight truncate m-0">
                     {persona.name}
-                  </div>
-                  <div className="text-[11px] text-muted-foreground truncate">
+                  </p>
+                  <p className="text-[11px] text-muted-foreground truncate m-0">
                     {persona.shortBio}
                   </div>
                 </div>
