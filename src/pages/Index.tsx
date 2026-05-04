@@ -38,8 +38,28 @@ const Index = () => {
     );
   }
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "LikeTony.ai",
+    applicationCategory: "BusinessApplication",
+    operatingSystem: "Web",
+    description:
+      "Drop your URL, pick a voice (Hormozi, Jobs, Hemingway and more), and rewrite your landing page in 60 seconds.",
+    offers: {
+      "@type": "Offer",
+      price: "19",
+      priceCurrency: "USD",
+    },
+  };
+
   return (
     <div className="min-h-screen relative">
+      <script
+        type="application/ld+json"
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <header className="px-6 sm:px-10 py-5 flex items-center justify-between border-b border-border/40">
         <a href="/" className="flex items-center gap-2.5 group">
           <div className="w-9 h-9 rounded-md bg-primary flex items-center justify-center shadow-warm">
@@ -86,19 +106,19 @@ const Index = () => {
               </div>
             </div>
 
-            <div className="relative rounded-xl border border-border bg-card/60 px-4 py-3 shadow-warm">
+            <aside aria-label="Selected voice" className="relative rounded-xl border border-border bg-card/60 px-4 py-3 shadow-warm">
               <div className="flex items-center gap-3">
                 <PersonaAvatar persona={persona} size="lg" />
                 <div className="min-w-0 flex-1">
-                  <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                  <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground m-0">
                     Voice selected
-                  </div>
-                  <div className="font-display font-semibold text-lg leading-tight truncate">
+                  </p>
+                  <p className="font-display font-semibold text-lg leading-tight truncate m-0">
                     {persona.name}
-                  </div>
-                  <div className="text-[11px] text-muted-foreground truncate">
+                  </p>
+                  <p className="text-[11px] text-muted-foreground truncate m-0">
                     {persona.shortBio}
-                  </div>
+                  </p>
                 </div>
               </div>
               {(() => {
@@ -114,11 +134,12 @@ const Index = () => {
                   </blockquote>
                 );
               })()}
-            </div>
+            </aside>
           </div>
         </section>
 
-        <section id="voices" className="px-6 sm:px-10 pt-2 pb-16 max-w-6xl mx-auto">
+        <section id="voices" aria-labelledby="voices-heading" className="px-6 sm:px-10 pt-2 pb-16 max-w-6xl mx-auto">
+          <h2 id="voices-heading" className="sr-only">Pick a voice</h2>
           <PersonaCatalog selectedId={persona?.id} onSelect={setPersona} />
         </section>
 

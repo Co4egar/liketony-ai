@@ -98,8 +98,8 @@ const WhyItMatters = () => {
                     {s.n}
                   </div>
                   <div className="flex-1">
-                    <div className="font-display text-xl font-medium mb-1.5">{s.t}</div>
-                    <div className="text-muted-foreground leading-relaxed">{s.d}</div>
+                    <h3 className="font-display text-xl font-medium mb-1.5">{s.t}</h3>
+                    <p className="text-muted-foreground leading-relaxed">{s.d}</p>
                   </div>
                 </li>
               ))}
@@ -130,12 +130,12 @@ const WhyItMatters = () => {
                 <div className="flex items-center gap-3 mb-4">
                   <PersonaAvatar persona={p} size="md" />
                   <div className="min-w-0">
-                    <div className="font-display font-semibold text-lg leading-tight truncate">
+                    <h3 className="font-display font-semibold text-lg leading-tight truncate m-0">
                       {p.name}
-                    </div>
-                    <div className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground mt-0.5">
+                    </h3>
+                    <p className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground mt-0.5 m-0">
                       {p.category.replace("-", " ")}
-                    </div>
+                    </p>
                   </div>
                 </div>
                 <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
@@ -203,18 +203,18 @@ function ValueCard({
   body: string;
 }) {
   return (
-    <div className="bg-card/40 p-7 sm:p-8 flex flex-col gap-4">
+    <article className="bg-card/40 p-7 sm:p-8 flex flex-col gap-4">
       <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-md bg-primary/15 text-primary flex items-center justify-center">
+        <div aria-hidden="true" className="w-9 h-9 rounded-md bg-primary/15 text-primary flex items-center justify-center">
           {icon}
         </div>
-        <div className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
+        <p className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground m-0">
           {kicker}
-        </div>
+        </p>
       </div>
-      <div className="font-display text-xl leading-snug font-medium">{title}</div>
-      <p className="text-sm text-muted-foreground leading-relaxed">{body}</p>
-    </div>
+      <h3 className="font-display text-xl leading-snug font-medium m-0">{title}</h3>
+      <p className="text-sm text-muted-foreground leading-relaxed m-0">{body}</p>
+    </article>
   );
 }
 
