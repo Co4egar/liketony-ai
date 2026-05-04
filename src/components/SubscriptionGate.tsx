@@ -78,7 +78,21 @@ export function SubscriptionGate({ open, onOpenChange, onSubscribed }: Props) {
     try {
       const { data, error } = await supabase.functions.invoke("create-checkout");
       if (error) throw error;
-      if (data?.url) window.open(data.url, "_blank");
+      if (data?.url) {
+        window.open(data.url, "_blank");
+        // Start polling for active subscription
+        setWaitingPayment(true);
+        pollRef.current = window.setInterval(async () => {
+          const { data: sub } = await supabase.functions.invoke("check-subscription");
+          if (sub?.subscribed) {
+            stopPolling();
+            toast.success("Payment confirmed! Downloading...");
+            onSubscribed();
+            onOpenChange(false);
+            reset();
+          }
+        }, 3000);
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to start checkout");
     } finally { setLoading(false); }
