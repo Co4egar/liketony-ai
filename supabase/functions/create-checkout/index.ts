@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
         {
           price_data: {
             currency: "usd",
-            unit_amount: 1900,
+            unit_amount: 1999,
             product_data: {
               name: "LikeTony.ai — HTML download",
               description: safeSourceUrl

@@ -135,7 +135,7 @@ const SharedRewrite = () => {
           </div>
           <Button size="sm" variant="secondary" onClick={handleDownload} disabled={paying}>
             {paying ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Download className="w-4 h-4 mr-1.5" />}
-            Download HTML <span className="ml-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">$19</span>
+            Download HTML <span className="ml-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">$19.99</span>
           </Button>
           <a href={data.source_url} target="_blank" rel="noopener noreferrer">
             <Button size="sm" variant="ghost"><ExternalLink className="w-4 h-4" /></Button>
