@@ -6,8 +6,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const PRICE_ID = "price_1TTDHLKXMOuSgnI7Gha59McD";
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -22,33 +20,38 @@ Deno.serve(async (req) => {
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("Not authenticated");
-    const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userErr } = await supabase.auth.getUser(token);
+    const { data: userData, error: userErr } = await supabase.auth.getUser(
+      authHeader.replace("Bearer ", "")
+    );
     if (userErr || !userData.user?.email) throw new Error("Not authenticated");
     const email = userData.user.email;
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2024-06-20" });
-
     const customers = await stripe.customers.list({ email, limit: 1 });
-    const customerId = customers.data[0]?.id;
-
-    const origin = req.headers.get("origin") ?? "";
-    const session = await stripe.checkout.sessions.create({
-      customer: customerId,
-      customer_email: customerId ? undefined : email,
-      mode: "subscription",
-      line_items: [{ price: PRICE_ID, quantity: 1 }],
-      success_url: `${origin}/?subscription=success`,
-      cancel_url: `${origin}/?subscription=cancel`,
+    if (customers.data.length === 0) {
+      return new Response(JSON.stringify({ subscribed: false }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+    const subs = await stripe.subscriptions.list({
+      customer: customers.data[0].id,
+      status: "active",
+      limit: 1,
     });
-
-    return new Response(JSON.stringify({ url: session.url }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
+    const active = subs.data[0];
+    return new Response(
+      JSON.stringify({
+        subscribed: !!active,
+        subscription_end: active
+          ? new Date(active.current_period_end * 1000).toISOString()
+          : null,
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+    );
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Unknown error";
-    return new Response(JSON.stringify({ error: msg }), {
+    return new Response(JSON.stringify({ error: msg, subscribed: false }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });
