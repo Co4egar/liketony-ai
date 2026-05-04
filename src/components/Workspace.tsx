@@ -194,9 +194,9 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
   }, [result, view]);
 
   return (
-    <div ref={ref} className="fixed inset-0 z-30 flex bg-background animate-fade-in">
+    <div ref={ref} className="fixed inset-0 z-30 flex flex-col sm:flex-row bg-background animate-fade-in">
       {/* Sidebar */}
-      <aside className="w-full sm:w-[340px] border-r border-border/60 bg-card/40 backdrop-blur flex flex-col">
+      <aside className="w-full sm:w-[340px] sm:h-full max-h-[55vh] sm:max-h-none border-b sm:border-b-0 sm:border-r border-border/60 bg-card/40 backdrop-blur flex flex-col shrink-0">
         <div className="p-4 border-b border-border/60 flex items-center justify-between">
           <button onClick={onClose} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
             <ChevronLeft className="w-4 h-4" /> Home
@@ -298,7 +298,7 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
       </aside>
 
       {/* Workspace */}
-      <main className="flex-1 hidden sm:flex flex-col bg-background relative overflow-hidden">
+      <main className="flex-1 min-h-[300px] flex flex-col bg-background relative overflow-hidden">
         {loading && (
           <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm z-10">
             <div className="flex flex-col items-center gap-4">
