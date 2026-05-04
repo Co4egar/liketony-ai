@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Loader2, Download, ArrowLeft, ExternalLink } from "lucide-react";
+import { Loader2, Download, ArrowLeft, ExternalLink, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { enhancePreviewHtml } from "@/lib/preview-html";
+import { useSubscription } from "@/hooks/useSubscription";
+import { SubscriptionGate } from "@/components/SubscriptionGate";
 
 interface Rewrite {
   source_url: string;
@@ -19,6 +21,8 @@ const SharedRewrite = () => {
   const [data, setData] = useState<Rewrite | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [view, setView] = useState<"rewritten" | "original">("rewritten");
+  const [gateOpen, setGateOpen] = useState(false);
+  const { subscribed, refresh: refreshSub } = useSubscription();
 
   useEffect(() => {
     if (!publicId) return;
@@ -58,7 +62,7 @@ const SharedRewrite = () => {
     ? enhancePreviewHtml(data.html_rewritten, data.source_url)
     : enhancePreviewHtml(data.html_original, data.source_url);
 
-  const handleDownload = () => {
+  const performDownload = () => {
     const blob = new Blob([data.html_rewritten], { type: "text/html" });
     const a = document.createElement("a");
     let host = "site";
@@ -69,6 +73,14 @@ const SharedRewrite = () => {
     a.click();
     a.remove();
     URL.revokeObjectURL(a.href);
+  };
+
+  const handleDownload = () => {
+    if (!subscribed) {
+      setGateOpen(true);
+      return;
+    }
+    performDownload();
   };
 
   return (
@@ -99,7 +111,8 @@ const SharedRewrite = () => {
             ))}
           </div>
           <Button size="sm" variant="secondary" onClick={handleDownload}>
-            <Download className="w-4 h-4 mr-1.5" /> Download HTML
+            {subscribed ? <Download className="w-4 h-4 mr-1.5" /> : <Lock className="w-4 h-4 mr-1.5" />}
+            Download HTML
           </Button>
           <a href={data.source_url} target="_blank" rel="noopener noreferrer">
             <Button size="sm" variant="ghost"><ExternalLink className="w-4 h-4" /></Button>
@@ -112,6 +125,11 @@ const SharedRewrite = () => {
         srcDoc={previewHtml}
         sandbox="allow-same-origin allow-scripts allow-popups"
         className="flex-1 w-full bg-white"
+      />
+      <SubscriptionGate
+        open={gateOpen}
+        onOpenChange={setGateOpen}
+        onSubscribed={() => { refreshSub(); performDownload(); }}
       />
     </div>
   );
