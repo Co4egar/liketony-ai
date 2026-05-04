@@ -49,21 +49,43 @@ Deno.serve(async (req) => {
     if (!name || typeof name !== "string" || name.trim().length < 2) {
       return json({ error: "name required" }, 400);
     }
+    // Reject obviously abusive/garbage input
     const cleanName = name.trim().slice(0, 80);
+    if (cleanName.length > 80 || !/[a-zA-Zа-яА-ЯёЁ]/.test(cleanName)) {
+      return json({ error: "Invalid name" }, 400);
+    }
     const slug = `custom-${slugify(cleanName)}`;
+    if (!slug || slug === "custom-") return json({ error: "Invalid name" }, 400);
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    const { data: existing } = await supabase
+    // IP-based rate limit: 10 new persona generations per hour.
+    // Cached personas (existing rows) bypass the limit since they're free.
+    const { data: existingFast } = await supabase
       .from("custom_personas")
       .select("*")
       .eq("slug", slug)
       .maybeSingle();
-    if (existing) {
-      return json({ persona: toPersona(existing) });
+    if (existingFast) {
+      return json({ persona: toPersona(existingFast) });
+    }
+
+    const ip =
+      req.headers.get("cf-connecting-ip") ||
+      req.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
+      "unknown";
+    const { data: rate } = await supabase.rpc("check_and_record_rate_limit", {
+      p_ip: `ip:${ip}`,
+      p_action: "generate-persona",
+      p_limit: 10,
+      p_window_minutes: 60,
+      p_user_id: null,
+    });
+    if (rate && (rate as { allowed: boolean }).allowed === false) {
+      return json({ error: "Rate limit reached: 10 personas per hour. Try again later." }, 429);
     }
 
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
