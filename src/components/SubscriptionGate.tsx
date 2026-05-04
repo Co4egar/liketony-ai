@@ -21,7 +21,20 @@ export function SubscriptionGate({ open, onOpenChange, onSubscribed }: Props) {
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [waitingPayment, setWaitingPayment] = useState(false);
+  const [resendIn, setResendIn] = useState(0);
   const pollRef = useRef<number | null>(null);
+  const cooldownRef = useRef<number | null>(null);
+
+  const startCooldown = (sec = 60) => {
+    setResendIn(sec);
+    if (cooldownRef.current) window.clearInterval(cooldownRef.current);
+    cooldownRef.current = window.setInterval(() => {
+      setResendIn((s) => {
+        if (s <= 1) { if (cooldownRef.current) window.clearInterval(cooldownRef.current); return 0; }
+        return s - 1;
+      });
+    }, 1000);
+  };
 
   const stopPolling = () => {
     if (pollRef.current) { window.clearInterval(pollRef.current); pollRef.current = null; }
@@ -32,8 +45,9 @@ export function SubscriptionGate({ open, onOpenChange, onSubscribed }: Props) {
 
   useEffect(() => () => stopPolling(), []);
 
-  const sendCode = async () => {
+  const sendCode = async (isResend = false) => {
     if (!email.trim()) return;
+    if (isResend && resendIn > 0) return;
     setLoading(true);
     try {
       const { error } = await supabase.auth.signInWithOtp({
@@ -41,8 +55,10 @@ export function SubscriptionGate({ open, onOpenChange, onSubscribed }: Props) {
         options: { shouldCreateUser: true, emailRedirectTo: window.location.origin },
       });
       if (error) throw error;
-      toast.success("Code sent! Check your email");
+      toast.success("Code sent! Check your email (use the LATEST code)");
       setStep("otp");
+      setCode("");
+      startCooldown(60);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to send code");
     } finally { setLoading(false); }
@@ -57,8 +73,12 @@ export function SubscriptionGate({ open, onOpenChange, onSubscribed }: Props) {
         token: code.trim(),
         type: "email",
       });
-      if (error) throw error;
-      // Check subscription
+      if (error) {
+        if (error.message?.toLowerCase().includes("expired") || error.message?.toLowerCase().includes("invalid")) {
+          throw new Error("Code expired or invalid. Use the most recent code from your email, or request a new one.");
+        }
+        throw error;
+      }
       const { data } = await supabase.functions.invoke("check-subscription");
       if (data?.subscribed) {
         toast.success("Welcome back! Subscription active");
@@ -110,8 +130,8 @@ export function SubscriptionGate({ open, onOpenChange, onSubscribed }: Props) {
             <div className="space-y-3">
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" autoFocus value={email} onChange={(e) => setEmail(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && sendCode()} placeholder="you@example.com" />
-              <Button onClick={sendCode} disabled={loading || !email} className="w-full">
+                onKeyDown={(e) => e.key === "Enter" && sendCode(false)} placeholder="you@example.com" />
+              <Button onClick={() => sendCode(false)} disabled={loading || !email} className="w-full">
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send code"}
               </Button>
             </div>
@@ -121,7 +141,7 @@ export function SubscriptionGate({ open, onOpenChange, onSubscribed }: Props) {
           <>
             <DialogHeader>
               <DialogTitle>Enter verification code</DialogTitle>
-              <DialogDescription>Sent to {email}</DialogDescription>
+              <DialogDescription>Sent to {email}. Use the most recent code if you requested several.</DialogDescription>
             </DialogHeader>
             <div className="space-y-3">
               <Label htmlFor="code">6-digit code</Label>
@@ -130,6 +150,13 @@ export function SubscriptionGate({ open, onOpenChange, onSubscribed }: Props) {
               <Button onClick={verifyCode} disabled={loading || !code} className="w-full">
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Verify"}
               </Button>
+              <button
+                onClick={() => sendCode(true)}
+                disabled={resendIn > 0 || loading}
+                className="text-xs text-muted-foreground hover:underline w-full disabled:opacity-50"
+              >
+                {resendIn > 0 ? `Resend code in ${resendIn}s` : "Resend code"}
+              </button>
               <button onClick={() => setStep("email")} className="text-xs text-muted-foreground hover:underline w-full">
                 Use a different email
               </button>
