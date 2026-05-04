@@ -38,8 +38,28 @@ const Index = () => {
     );
   }
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "LikeTony.ai",
+    applicationCategory: "BusinessApplication",
+    operatingSystem: "Web",
+    description:
+      "Drop your URL, pick a voice (Hormozi, Jobs, Hemingway and more), and rewrite your landing page in 60 seconds.",
+    offers: {
+      "@type": "Offer",
+      price: "19",
+      priceCurrency: "USD",
+    },
+  };
+
   return (
     <div className="min-h-screen relative">
+      <script
+        type="application/ld+json"
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <header className="px-6 sm:px-10 py-5 flex items-center justify-between border-b border-border/40">
         <a href="/" className="flex items-center gap-2.5 group">
           <div className="w-9 h-9 rounded-md bg-primary flex items-center justify-center shadow-warm">
