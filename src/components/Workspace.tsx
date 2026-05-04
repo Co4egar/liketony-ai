@@ -50,24 +50,30 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
   const usage = usePersonaUsage();
   const [paying, setPaying] = useState(false);
 
-  // Auto-download after returning from Stripe checkout
+  // Show confirmation after returning from Stripe checkout
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const sessionId = params.get("paid");
-    if (sessionId && sessionId !== "cancel") {
-      (async () => {
-        const { data } = await supabase.functions.invoke("verify-payment", { body: { sessionId } });
-        if (data?.paid) {
-          toast.success("Payment confirmed! Your download is ready.");
-          sessionStorage.setItem("liketony_paid", "1");
-        } else {
-          toast.error("Payment not confirmed");
-        }
-        window.history.replaceState({}, "", window.location.pathname);
-      })();
-    } else if (sessionId === "cancel") {
+    if (!sessionId) return;
+    if (sessionId === "cancel") {
+      toast.info("Payment cancelled");
       window.history.replaceState({}, "", window.location.pathname);
+      return;
     }
+    (async () => {
+      const { data } = await supabase.functions.invoke("verify-payment", { body: { sessionId } });
+      if (data?.paid) {
+        toast.success(
+          data.email
+            ? `Payment confirmed! We've sent the HTML to ${data.email}.`
+            : "Payment confirmed! Check your email for the download link.",
+          { duration: 8000 },
+        );
+      } else {
+        toast.error("Payment not confirmed");
+      }
+      window.history.replaceState({}, "", window.location.pathname);
+    })();
   }, []);
   const personaCount = usage[persona.id] ?? 0;
 
@@ -138,32 +144,16 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
     setPending({ url: targetUrl, persona: targetPersona, intensity: targetIntensity });
   };
 
-  const performDownload = () => {
-    if (!result) return;
-    const blob = new Blob([result.htmlRewritten], { type: "text/html" });
-    const a = document.createElement("a");
-    const safeHost = (() => {
-      try { return new URL(result.url).hostname.replace(/\W+/g, "-"); } catch { return "site"; }
-    })();
-    a.href = URL.createObjectURL(blob);
-    a.download = `${safeHost}-${persona.id}.html`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(a.href);
-  };
-
   const handleDownload = async () => {
     if (!result) return;
-    if (sessionStorage.getItem("liketony_paid") === "1") {
-      sessionStorage.removeItem("liketony_paid");
-      performDownload();
-      return;
-    }
     setPaying(true);
     try {
       const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: { publicId: result.publicId },
+        body: {
+          publicId: result.publicId,
+          sourceUrl: result.url,
+          personaName: persona.name,
+        },
       });
       if (error) throw error;
       if (!data?.url) throw new Error("No checkout URL");
