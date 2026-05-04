@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
         .maybeSingle();
 
       if (!existing) {
-        const downloadUrl = `${supabaseUrl}/functions/v1/download-html?session=${encodeURIComponent(sessionId)}`;
+        const downloadUrl = `https://liketony.ai/d?session=${encodeURIComponent(sessionId)}`;
         try {
           const sendResp = await fetch(`${supabaseUrl}/functions/v1/send-transactional-email`, {
             method: "POST",
