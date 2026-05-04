@@ -17,27 +17,37 @@ interface Props {
 
 export function PersonaCatalog({ selectedId, onSelect, layout = "grid" }: Props) {
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [activeCat, setActiveCat] = useState<PersonaCategory | "all">("all");
   const [customLoading, setCustomLoading] = useState(false);
   const [customStage, setCustomStage] = useState(0);
   const [customName, setCustomName] = useState("");
   const usage = usePersonaUsage();
 
-  const customStages = [
-    "Searching public sources",
-    "Extracting voice patterns",
-    "Building deep knowledge profile",
-    "Saving for future requests",
-  ];
+  // Debounce search input to avoid filtering on every keystroke.
+  useEffect(() => {
+    const t = window.setTimeout(() => setDebouncedQuery(query), 150);
+    return () => window.clearTimeout(t);
+  }, [query]);
+
+  const customStages = useMemo(
+    () => [
+      "Searching public sources",
+      "Extracting voice patterns",
+      "Building deep knowledge profile",
+      "Saving for future requests",
+    ],
+    [],
+  );
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = debouncedQuery.trim().toLowerCase();
     return PERSONAS.filter((p) => {
       if (activeCat !== "all" && p.category !== activeCat) return false;
       if (!q) return true;
       return p.name.toLowerCase().includes(q) || p.shortBio.toLowerCase().includes(q);
     });
-  }, [query, activeCat]);
+  }, [debouncedQuery, activeCat]);
 
   const handleCustom = async () => {
     const name = customName.trim();
