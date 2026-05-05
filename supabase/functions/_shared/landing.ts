@@ -29,6 +29,10 @@ const VOID_TAGS = new Set([
 
 function isButtonishOpenTag(tagHtml: string, tag: string): boolean {
   if (tag === "button") return true;
+  // Treat links as layout-sensitive controls too. Most scraped nav items and
+  // CTA buttons are <a> tags, and expanding them is what makes menus/buttons
+  // visually run into each other across many different site builders.
+  if (tag === "a" && /\bhref\s*=/i.test(tagHtml)) return true;
   return /\bdata-elem-type\s*=\s*(["'])button\1/i.test(tagHtml) ||
     /\brole\s*=\s*(["'])button\1/i.test(tagHtml) ||
     /\bclass\s*=\s*(["'])[^"']*(?:\bt-btn\b|\bbtn\b|button|t-submit)[^"']*\1/i.test(tagHtml);
@@ -223,7 +227,7 @@ export function constrainRewritesForLayout(
     const original = seg.text.replace(/\s+/g, " ").trim();
     const len = Array.from(original).length;
     const max =
-      seg.kind === "button" ? (opt ? Math.max(len + 4, Math.ceil(len * 1.25)) : len) :
+      seg.kind === "button" ? (opt ? Math.max(len + 2, Math.ceil(len * 1.12)) : len) :
       seg.kind === "title" ? Math.max(len + (opt ? 16 : 6), Math.ceil(len * (opt ? 1.4 : 1.12))) :
       seg.kind === "meta-description" ? Math.max(len + (opt ? 30 : 12), Math.ceil(len * (opt ? 1.4 : 1.18))) :
       seg.kind === "alt" || seg.kind === "aria-label" ? Math.max(len + 4, Math.ceil(len * 1.1)) :
@@ -242,7 +246,7 @@ export function constrainRewritesForLayout(
       );
     const maxWeight = visualWeight(original) * (
       opt ? (
-        seg.kind === "button" ? 1.2 :
+        seg.kind === "button" ? 1.08 :
         len <= 12 ? 1.3 :
         len <= 60 ? 1.4 :
         1.5
@@ -254,7 +258,11 @@ export function constrainRewritesForLayout(
       )
     );
 
-    safe[seg.id] = clampToBudget(compact, max, maxWeight) || original;
+    const fitted = clampToBudget(compact, max, maxWeight);
+    // Never ship chopped link/button labels like "Why We're Differen" — those
+    // are exactly the elements that collide visually. Use the rewrite only when
+    // it fits whole; otherwise keep the original compact label.
+    safe[seg.id] = seg.kind === "button" && fitted !== compact ? original : fitted || original;
   }
   return safe;
 }
@@ -428,13 +436,21 @@ img[data-original]{visibility:visible!important;opacity:1!important;}
       }
       if(overflow) restore(atom);
     });
-    each(document.querySelectorAll('.t396__elem[data-elem-type="button"]'),function(el){
+    var sensitive=[];
+    each(document.querySelectorAll('.t396__elem[data-elem-type="button"],.t396__elem[data-elem-type="text"]'),function(el){
+      var atom=el.querySelector('.tn-atom');
+      if(atom && /<!--LTORIG:/.test(atom.innerHTML) && (el.getAttribute('data-elem-type')==='button' || atom.querySelector('a'))) sensitive.push(el);
+    });
+    each(sensitive,function(el){
       var r1=el.getBoundingClientRect();
-      each(document.querySelectorAll('.t396__elem[data-elem-type="button"]'),function(other){
+      each(sensitive,function(other){
         if(other===el) return;
         var r2=other.getBoundingClientRect();
-        if(r1.right>r2.left && r1.left<r2.right && r1.bottom>r2.top && r1.top<r2.bottom){
+        var sameRow=r1.bottom>r2.top+2 && r1.top<r2.bottom-2;
+        var touching=sameRow && !(r1.right<r2.left-6 || r2.right<r1.left-6);
+        if(touching){
           var atom=el.querySelector('.tn-atom'); if(atom) restore(atom);
+          var otherAtom=other.querySelector('.tn-atom'); if(otherAtom) restore(otherAtom);
         }
       });
     });
