@@ -447,6 +447,9 @@ Deno.serve(async (req) => {
     const previewHtml = prepareStaticPreviewHtml(finalHtml, url);
     const originalPreview = prepareStaticPreviewHtml(html, url);
 
+    // Score selling power before/after — non-blocking on failure.
+    const sellingScore = await scoreSellingPower(segments, safeRewrittenMap);
+
     // Persist for share link.
     const supabase = supabaseAdmin;
     const publicId = generatePublicId();
@@ -476,6 +479,7 @@ Deno.serve(async (req) => {
       htmlOriginalPreview: originalPreview,
       segmentCount: segments.length,
       rewrittenCount: Object.keys(safeRewrittenMap).length,
+      sellingScore,
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
