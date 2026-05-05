@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ChevronDown, TrendingUp, Mic2 } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { SellingScore, VoiceFit } from "@/types/rewrite";
 
@@ -85,9 +85,6 @@ export function SellingScoreCard({ before, after, voiceFit, defaultOpen = false,
         className="w-full flex items-center gap-3 px-4 py-3 text-left"
         aria-expanded={open}
       >
-        <div className="w-8 h-8 rounded-md bg-primary/15 text-primary flex items-center justify-center shrink-0">
-          {isPersona ? <Mic2 className="w-4 h-4" /> : <TrendingUp className="w-4 h-4" />}
-        </div>
         <div className="min-w-0 flex-1">
           <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground leading-none mb-1">
             {isPersona ? "Voice fit" : "Selling power"}
