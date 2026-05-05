@@ -490,30 +490,35 @@ function PreviewFrame({ srcDoc }: { srcDoc: string }) {
     return () => ro.disconnect();
   }, []);
 
-  // Measure inner iframe document height.
+  // Measure inner iframe document height. Cap to prevent vh-based feedback loops.
+  const MAX_H = 20000;
   const measure = () => {
     const doc = iframeRef.current?.contentDocument;
     if (!doc) return;
-    const h = Math.max(
-      doc.documentElement?.scrollHeight ?? 0,
-      doc.body?.scrollHeight ?? 0,
-      900,
+    // Temporarily neutralize iframe height influence so body reports its natural size.
+    const iframe = iframeRef.current!;
+    const prevH = iframe.style.height;
+    iframe.style.height = "0px";
+    // Force reflow
+    void doc.body?.offsetHeight;
+    const h = Math.min(
+      MAX_H,
+      Math.max(
+        doc.documentElement?.scrollHeight ?? 0,
+        doc.body?.scrollHeight ?? 0,
+        900,
+      ),
     );
-    setContentH((prev) => (Math.abs(prev - h) > 2 ? h : prev));
+    iframe.style.height = prevH;
+    setContentH((prev) => (Math.abs(prev - h) > 4 ? h : prev));
   };
 
   // Observe iframe content for size changes instead of polling on an interval.
   const handleIframeLoad = () => {
-    measure();
-    const doc = iframeRef.current?.contentDocument;
-    if (!doc?.body) return;
-    const ro = new ResizeObserver(() => measure());
-    ro.observe(doc.body);
-    if (doc.documentElement) ro.observe(doc.documentElement);
-    // Stash on iframe so we can disconnect on next load/unmount.
-    const prev = (iframeRef.current as any)?._ro as ResizeObserver | undefined;
-    prev?.disconnect();
-    (iframeRef.current as any)._ro = ro;
+    // Defer initial measure so layout settles.
+    setTimeout(measure, 50);
+    setTimeout(measure, 400);
+    setTimeout(measure, 1200);
   };
 
   useEffect(() => {
