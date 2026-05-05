@@ -273,6 +273,9 @@ export function prepareStaticPreviewHtml(html: string, sourceUrl: string): strin
     // inside a same-origin iframe can blank the app shell or mutate the DOM.
     // Keep scripts in the downloadable HTML, but strip them from previews.
     .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+    // <noscript> content (e.g. "Please upgrade your browser") would render
+    // because scripts are disabled in the preview iframe. Drop it.
+    .replace(/<noscript\b[^>]*>[\s\S]*?<\/noscript>/gi, "")
     .replace(/\son[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "");
 
   out = out.replace(
@@ -319,8 +322,35 @@ html,body{min-width:0!important;max-width:100%!important;overflow-x:hidden!impor
 .t-animate,[data-animate-style],[data-animate-style-res-320],[data-animate-style-res-360],[data-animate-style-res-480],[data-animate-style-res-640],[data-animate-style-res-960]{opacity:1!important;transform:none!important;transition:none!important;}
 .t396__artboard,.t396__carrier,.t396__filter{overflow:hidden!important;}
 img[data-original]{visibility:visible!important;opacity:1!important;}
+/* Force-reveal content hidden by JS-driven animation libraries (Framer Motion, GSAP, AOS, etc.) */
+*{animation-play-state:running!important;}
+[style*="opacity:0"],[style*="opacity: 0"],[style*="opacity:0;"],[style*="opacity: 0;"]{opacity:1!important;}
+[style*="visibility:hidden"],[style*="visibility: hidden"]{visibility:visible!important;}
+[style*="translate3d"],[style*="translateY"],[style*="translateX"],[style*="translate("]{transform:none!important;}
+[data-framer-appear-id],[data-aos],[data-scroll],[data-reveal],[data-animate]:not([data-animate-style]){opacity:1!important;transform:none!important;visibility:visible!important;}
+.fade-in,.fadein,.reveal,.animate-on-scroll,.scroll-reveal,.appear{opacity:1!important;transform:none!important;visibility:visible!important;}
+[class*="opacity-0"]{opacity:1!important;}
+[class*="translate-y"],[class*="translate-x"]{transform:none!important;}
 </style><script id="liketony-text-fit">
 (function(){
+  // Aggressively neutralize JS-driven hiding even when site scripts are stripped:
+  // many modern sites use inline style="opacity:0; transform:translateY(...)" that
+  // their framework would later clear. Without their JS, content stays invisible.
+  function revealAll(){
+    try {
+      document.querySelectorAll('[style]').forEach(function(el){
+        var s = el.getAttribute('style') || '';
+        if (!s) return;
+        var changed = false;
+        if (/opacity\s*:\s*0(\D|$)/i.test(s)) { s = s.replace(/opacity\s*:\s*0(\.\d+)?\s*;?/gi, ''); changed = true; }
+        if (/visibility\s*:\s*hidden/i.test(s)) { s = s.replace(/visibility\s*:\s*hidden\s*;?/gi, ''); changed = true; }
+        if (/transform\s*:[^;]*translate/i.test(s)) { s = s.replace(/transform\s*:[^;]*;?/gi, ''); changed = true; }
+        if (/clip-path\s*:\s*inset\(\s*100%/i.test(s)) { s = s.replace(/clip-path\s*:[^;]*;?/gi, ''); changed = true; }
+        if (changed) el.setAttribute('style', s);
+      });
+    } catch(e) {}
+  }
+  revealAll();
   function each(list,fn){Array.prototype.forEach.call(list,fn);}
   function normalizeTildaRuntime(){
     each(document.querySelectorAll('.t396__elem[style]'),function(el){
