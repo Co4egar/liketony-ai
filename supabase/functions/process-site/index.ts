@@ -500,8 +500,8 @@ Deno.serve(async (req) => {
     const { error: insertErr } = await supabase.from("rewrites").insert({
       public_id: publicId,
       source_url: url,
-      persona_id: body.persona.id,
-      persona_name: body.persona.name,
+      persona_id: persona.id,
+      persona_name: persona.name,
       html_original: html,
       html_rewritten: finalHtml,
       selling_score: sellingScore,
