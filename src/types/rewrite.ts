@@ -37,7 +37,7 @@ export interface RewriteResult {
   htmlOriginalPreview?: string;
   segmentCount: number;
   rewrittenCount: number;
-  sellingScore?: { before: SellingScore; after: SellingScore } | null;
+  sellingScore?: SellingScoreBundle | null;
 }
 
 export interface RewriteJob {
