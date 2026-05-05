@@ -281,9 +281,9 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
               const after = result.sellingScore.after.total;
               const pred = result.sellingScore.predictedOptimized;
               if (!pred) return null;
-              const gain = Math.max(0, pred.min - after);
-              const expected = Math.max(pred.expected, pred.min);
-              if (gain < 3) return null;
+              const minGain = Math.max(0, pred.min - after);
+              const expectedGain = Math.max(minGain, pred.expected - after);
+              if (expectedGain < 2) return null;
               return (
                 <Button
                   onClick={handleOptimize}
@@ -296,7 +296,7 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
                   <span className="break-words">
                     {optimizing
                       ? "Tony Bot is rewriting…"
-                      : `Tony Bot: lift Selling Power to ${expected}/100 (min +${gain})`}
+                      : `Tony Bot: boost Selling Power ~+${expectedGain}${minGain > 0 && minGain < expectedGain ? ` (min +${minGain})` : ""}`}
                   </span>
                 </Button>
               );

@@ -471,14 +471,18 @@ ${isPersona ? `ALSO score VOICE FIT for the AFTER version, judging it as a CHARA
 - entertainment: Memorable, fun, quotable. Would a reader smile or screenshot a line?
 - shareability: Would this version make a stranger send the link to a friend?
 
-` : ""}ALSO predict realistic optimization potential: if Tony Bot (a top direct-response copywriter with permission to expand hero/headline/CTA length by ~50% but NO permission to invent facts/numbers/prices) rewrote the AFTER version, what total Selling-Power score (0-100) could be realistically reached?
+` : ""}ALSO predict realistic optimization potential. Tony Bot is a separate pass that rewrites the AFTER version with ONE goal: maximize Selling Power. Tony does NOT preserve any persona voice — persona is irrelevant to Tony. Constraints on Tony:
+- May rewrite headline, subhead, CTAs, body copy in plain direct-response English.
+- May expand each segment length up to ~1.5×.
+- May NOT invent facts, numbers, prices, names, testimonials.
+- Works segment-by-segment on the SAME structure (cannot add/remove sections, cannot reorder).
+- Length of each segment stays roughly similar (no replacing a 4-word headline with a 40-word essay).
 
-Be CONSERVATIVE and HONEST — under-promise, over-deliver. The user will see this number as a guarantee.
-- "predictedOptimizedMin" = the LOWEST gain you are confident in. ${isPersona ? "Persona rewrites usually have LOTS of headroom because the persona deliberately sacrifices clarity/specificity for character. If AFTER total < 60, min should be at least +10." : "If you're not sure the rewrite can clearly improve the page, set min to 0. Most pages can only realistically gain 3-15 points."}
-- "predictedOptimizedExpected" = realistic expected total after optimization.
-- The constraint: no inventing facts. Tony Bot CAN expand headline/subhead length up to 1.5× to add specifics that already exist on the page.
-- A page that already has clear CTAs, concrete numbers and outcome-focused copy has very little headroom — set min near 0.
-- Never predict a min total greater than min(95, after_total + (100 - after_total) * 0.55). Stay grounded.`;
+Predict what total Selling-Power score (0-100) Tony will REALISTICALLY reach. Be CONSERVATIVE and HONEST — under-promise, over-deliver. The user sees this as a guarantee and gets angry when reality undershoots.
+- "predictedOptimizedExpected" = realistic expected total. Typical gains are +5 to +15 points. Pages already at 70+ rarely gain more than +5-8.
+- "predictedOptimizedMin" = the LOWEST total you are confident Tony will hit. Should be very close to after_total (gain of +2 to +6 in most cases). Only go higher if AFTER is genuinely weak (<50) AND has obvious fixable problems (vague headline, missing CTA, no specifics).
+- Hard ceiling: predictedOptimizedMin ≤ after_total + min(8, remaining_headroom * 0.25). Never exceed this.
+- A page with clear CTAs, concrete numbers and outcome-focused copy has almost no headroom — set min = after_total + 1 or 2.`;
 
   const user = `BEFORE (original landing copy):
 ${beforeText}
@@ -564,14 +568,16 @@ ${afterText}`;
     const voiceFit = isPersona && parsed.voiceFit ? normalizeVoiceFit(parsed.voiceFit) : null;
     const rawMin = Number(parsed.predictedOptimizedMin);
     const rawExp = Number(parsed.predictedOptimizedExpected);
-    // Hard cap: never promise more than 55% of remaining headroom on the min.
+    // Hard cap on the MIN: never promise more than +8 or 25% of remaining headroom (whichever is smaller).
     const headroom = Math.max(0, 100 - after.total);
-    const ceilingMin = Math.min(95, after.total + Math.floor(headroom * 0.55));
+    const ceilingMin = Math.min(95, after.total + Math.min(8, Math.floor(headroom * 0.25)));
     const cappedMin = Number.isFinite(rawMin)
       ? Math.max(after.total, Math.min(ceilingMin, Math.round(rawMin)))
       : after.total;
+    // Expected: cap at +18 above after, and at most 50% of remaining headroom.
+    const ceilingExp = Math.min(100, after.total + Math.min(18, Math.floor(headroom * 0.5)));
     const cappedExp = Number.isFinite(rawExp)
-      ? Math.max(cappedMin, Math.min(100, Math.round(rawExp)))
+      ? Math.max(cappedMin, Math.min(ceilingExp, Math.round(rawExp)))
       : cappedMin;
     return {
       before,
