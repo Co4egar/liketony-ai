@@ -36,7 +36,7 @@ const SharedRewrite = () => {
         setError("This rewrite was not found.");
         return;
       }
-      setData(data as Rewrite);
+      setData(data as unknown as Rewrite);
       document.title = `${data.persona_name} rewrites ${data.source_url} — LikeTony.ai`;
     })();
   }, [publicId]);
