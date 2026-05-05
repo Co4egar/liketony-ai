@@ -315,6 +315,21 @@ function normalizeScore(raw: any): SellingScore {
   return { total, axes };
 }
 
+const VOICE_AXIS_KEYS = ["character", "tone", "signature", "entertainment", "shareability"] as const;
+
+function normalizeVoiceFit(raw: any): VoiceFit {
+  const axes: any = {};
+  let total = 0;
+  for (const k of VOICE_AXIS_KEYS) {
+    const a = raw?.axes?.[k] ?? {};
+    const score = clampAxis(a.score);
+    const note = typeof a.note === "string" ? a.note.slice(0, 120) : "";
+    axes[k] = { score, note };
+    total += score;
+  }
+  return { total, axes };
+}
+
 function joinSegmentsForScoring(segments: Segment[], rewrittenMap?: Record<number, string>): string {
   // Take a representative slice, prioritize hero/title/text. Cap ~6000 chars.
   const priority: Record<string, number> = {
