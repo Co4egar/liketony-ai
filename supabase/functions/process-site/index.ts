@@ -168,7 +168,7 @@ THE FIVE NON-NEGOTIABLES (every section must satisfy them):
 1. CLARITY — In 5 seconds the visitor knows: what is this, who is it for, what do they get. The H1 / hero line states the OUTCOME, not the company. If the original H1 is fluff like "Welcome" or company name, replace it with the strongest outcome statement supported by the page facts.
 2. SPECIFICITY — Strip every empty adjective ("world-class", "innovative", "best-in-class", "seamless", "next-generation", "cutting-edge", "solutions", "leverage", "synergy"). Replace with concrete nouns, verbs, named features, time/quantity ANCHORS that already exist on the page. NEVER invent numbers, prices, names, or claims that aren't in the original copy. If no number exists, use a concrete benefit ("close in 3 clicks", "no card needed") not adjectives.
 3. OUTCOME — You-language. Speak to what the customer GETS, FEELS, AVOIDS. Every paragraph leads with the benefit, then the mechanism. Cut self-praise.
-4. CTA — Every button becomes a verb of action that names the next step ("Start free", "Get the demo", "See pricing"). Never "Learn more", never "Submit", never "Click here". Match the original action — don't promise free if it's paid.
+4. CTA — Every actual CTA/button becomes a verb of action that names the next step ("Start free", "Get the demo", "See pricing"). Navigation/menu links must stay compact and recognizable. Never "Learn more", never "Submit", never "Click here". Match the original action — don't promise free if it's paid.
 5. VOICE — Confident, plainspoken, direct. Real tension. Short punchy sentences mixed with one longer benefit-line. No corporate filler. No emojis unless the original had them. No persona/character/accent.
 
 PROVEN MOVES (apply where they fit naturally):
@@ -185,7 +185,7 @@ ABSOLUTE RULES:
 4. No HTML tags. No placeholder tokens. No emojis unless the original had them.
 5. Output STRICT JSON: { "rewrites": { "<id>": "<new text>", ... } } with one entry per input id. Every id must be present.
 
-For very short segments (nav/buttons ≤4 words): use the strongest plain-English action verb that fits the budget. For headlines and subheadlines: USE the bigger budget — upgrade vague openings into outcome-led specifics.`;
+For very short segments (nav links, menu items, buttons ≤4 words): stay compact and use the strongest plain-English label/action that fits the budget. For headlines and subheadlines: USE the bigger budget — upgrade vague openings into outcome-led specifics.`;
 
   const system = mode === "optimize" ? optimizeSystem : personaSystem;
 
@@ -194,7 +194,7 @@ For very short segments (nav/buttons ≤4 words): use the strongest plain-Englis
   // outcomes, numbers, and stronger CTAs. Persona stays tight to preserve layout.
   const opt = mode === "optimize";
   const budgetFor = (kind: Segment["kind"], len: number): number => {
-    if (kind === "button") return opt ? Math.max(len + 4, Math.ceil(len * 1.25)) : len;
+    if (kind === "button") return opt ? Math.max(len + 2, Math.ceil(len * 1.12)) : len;
     if (kind === "title") return Math.max(len + (opt ? 16 : 6), Math.ceil(len * (opt ? 1.4 : 1.12)));
     if (kind === "meta-description") return Math.max(len + (opt ? 30 : 12), Math.ceil(len * (opt ? 1.4 : 1.18)));
     if (kind === "alt" || kind === "aria-label") return Math.max(len + 4, Math.ceil(len * 1.1));
