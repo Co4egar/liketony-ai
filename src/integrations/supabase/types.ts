@@ -215,6 +215,7 @@ export type Database = {
           persona_id: string
           persona_name: string
           public_id: string
+          selling_score: Json | null
           source_url: string
         }
         Insert: {
@@ -225,6 +226,7 @@ export type Database = {
           persona_id: string
           persona_name: string
           public_id: string
+          selling_score?: Json | null
           source_url: string
         }
         Update: {
@@ -235,6 +237,7 @@ export type Database = {
           persona_id?: string
           persona_name?: string
           public_id?: string
+          selling_score?: Json | null
           source_url?: string
         }
         Relationships: []
@@ -296,6 +299,7 @@ export type Database = {
           persona_id: string
           persona_name: string
           public_id: string
+          selling_score: Json
           source_url: string
         }[]
       }
