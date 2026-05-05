@@ -428,7 +428,9 @@ Deno.serve(async (req) => {
 
   try {
     const body = (await req.json()) as RequestBody;
-    if (!body?.url || !body?.persona?.voicePrompt) {
+    const mode: "persona" | "optimize" = body.mode === "optimize" ? "optimize" : "persona";
+    const persona = mode === "optimize" ? TONY_BOT_PERSONA : body.persona;
+    if (!body?.url || !persona?.voicePrompt) {
       return json({ error: "url and persona required" }, 400);
     }
 
@@ -481,7 +483,7 @@ Deno.serve(async (req) => {
     const html = await scrape(url);
     const { template, segments } = extractSegments(html);
     const intensity = typeof body.intensity === "number" ? body.intensity : 50;
-    const rewrittenMap = await rewriteSegments(segments, body.persona, intensity);
+    const rewrittenMap = await rewriteSegments(segments, persona, intensity, mode);
     const safeRewrittenMap = constrainRewritesForLayout(segments, rewrittenMap);
     const finalHtml = applyRewrites(template, segments, safeRewrittenMap);
 
