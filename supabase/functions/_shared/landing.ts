@@ -258,7 +258,11 @@ export function constrainRewritesForLayout(
       )
     );
 
-    safe[seg.id] = clampToBudget(compact, max, maxWeight) || original;
+    const fitted = clampToBudget(compact, max, maxWeight);
+    // Never ship chopped link/button labels like "Why We're Differen" — those
+    // are exactly the elements that collide visually. Use the rewrite only when
+    // it fits whole; otherwise keep the original compact label.
+    safe[seg.id] = seg.kind === "button" && fitted !== compact ? original : fitted || original;
   }
   return safe;
 }
