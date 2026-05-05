@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { enhancePreviewHtml } from "@/lib/preview-html";
 import { toast } from "sonner";
+import { SellingScoreCard } from "@/components/SellingScoreCard";
+import type { SellingScore } from "@/types/rewrite";
 
 interface Rewrite {
   source_url: string;
@@ -12,6 +14,7 @@ interface Rewrite {
   persona_id: string;
   html_rewritten: string;
   html_original: string;
+  selling_score: { before: SellingScore; after: SellingScore } | null;
   created_at: string;
 }
 
