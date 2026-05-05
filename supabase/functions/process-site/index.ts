@@ -460,6 +460,7 @@ Deno.serve(async (req) => {
       persona_name: body.persona.name,
       html_original: html,
       html_rewritten: finalHtml,
+      selling_score: sellingScore,
     });
     if (insertErr) console.error("rewrites insert failed:", insertErr);
 
