@@ -331,7 +331,15 @@ Axes (each 0-20):
 - cta: Clear, action-oriented call(s) to action that tell the visitor what to do next.
 - voice: Tension, hook, distinctive voice vs bland corporate filler.
 
-For each axis return a tiny note (max ~80 chars) explaining the score in plain English.`;
+For each axis return a tiny note (max ~80 chars) explaining the score in plain English.
+
+ALSO predict realistic optimization potential: if a top human direct-response copywriter rewrote the AFTER version with NO new factual claims (same product, same numbers, same prices, same length budget per segment), what total 0-100 score could they realistically reach?
+
+Be CONSERVATIVE and HONEST — under-promise, over-deliver. The user will see this number as a guarantee.
+- "predictedOptimizedMin" = the LOWEST gain you are confident in. If you're not sure the rewrite can clearly improve the page, set min to 0. Most pages can only realistically gain 3-15 points; only obvious fluff-heavy pages can gain 20+.
+- "predictedOptimizedExpected" = realistic expected total after optimization.
+- The constraint is hard: no inventing facts, no expanding length. So a page that already has clear CTAs, concrete numbers and outcome-focused copy has very little headroom — set min near 0.
+- Never predict a min gain larger than (100 - after_total) * 0.4. Stay grounded.`;
 
   const user = `BEFORE (original landing copy):
 ${beforeText}
