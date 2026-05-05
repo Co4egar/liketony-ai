@@ -16,6 +16,18 @@ export interface SellingScore {
   };
 }
 
+export interface PredictedOptimization {
+  min: number;      // conservative lower bound, 0..100
+  expected: number; // realistic expected, 0..100
+  reasoning: string;
+}
+
+export interface SellingScoreBundle {
+  before: SellingScore;
+  after: SellingScore;
+  predictedOptimized?: PredictedOptimization | null;
+}
+
 export interface RewriteResult {
   publicId: string;
   url: string;
@@ -25,7 +37,7 @@ export interface RewriteResult {
   htmlOriginalPreview?: string;
   segmentCount: number;
   rewrittenCount: number;
-  sellingScore?: { before: SellingScore; after: SellingScore } | null;
+  sellingScore?: SellingScoreBundle | null;
 }
 
 export interface RewriteJob {

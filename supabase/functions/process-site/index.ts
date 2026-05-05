@@ -264,6 +264,7 @@ interface SellingScore {
 interface ScoreResponse {
   before: SellingScore;
   after: SellingScore;
+  predictedOptimized?: { min: number; expected: number; reasoning: string } | null;
 }
 
 const AXIS_KEYS = ["clarity", "specificity", "outcome", "cta", "voice"] as const;
@@ -330,7 +331,15 @@ Axes (each 0-20):
 - cta: Clear, action-oriented call(s) to action that tell the visitor what to do next.
 - voice: Tension, hook, distinctive voice vs bland corporate filler.
 
-For each axis return a tiny note (max ~80 chars) explaining the score in plain English.`;
+For each axis return a tiny note (max ~80 chars) explaining the score in plain English.
+
+ALSO predict realistic optimization potential: if a top human direct-response copywriter rewrote the AFTER version with NO new factual claims (same product, same numbers, same prices, same length budget per segment), what total 0-100 score could they realistically reach?
+
+Be CONSERVATIVE and HONEST — under-promise, over-deliver. The user will see this number as a guarantee.
+- "predictedOptimizedMin" = the LOWEST gain you are confident in. If you're not sure the rewrite can clearly improve the page, set min to 0. Most pages can only realistically gain 3-15 points; only obvious fluff-heavy pages can gain 20+.
+- "predictedOptimizedExpected" = realistic expected total after optimization.
+- The constraint is hard: no inventing facts, no expanding length. So a page that already has clear CTAs, concrete numbers and outcome-focused copy has very little headroom — set min near 0.
+- Never predict a min gain larger than (100 - after_total) * 0.4. Stay grounded.`;
 
   const user = `BEFORE (original landing copy):
 ${beforeText}
@@ -349,8 +358,30 @@ ${afterText}`;
         properties: {
           before: scoreSchema(),
           after: scoreSchema(),
+          predictedOptimizedMin: {
+            type: "number",
+            minimum: 0,
+            maximum: 100,
+            description: "Conservative LOWER BOUND of total score after optimization. Be honest — under-promise.",
+          },
+          predictedOptimizedExpected: {
+            type: "number",
+            minimum: 0,
+            maximum: 100,
+            description: "Realistic expected total score after optimization.",
+          },
+          optimizationReasoning: {
+            type: "string",
+            description: "1-2 sentences: what specifically can be improved and why the gain is bounded.",
+          },
         },
-        required: ["before", "after"],
+        required: [
+          "before",
+          "after",
+          "predictedOptimizedMin",
+          "predictedOptimizedExpected",
+          "optimizationReasoning",
+        ],
         additionalProperties: false,
       },
     },
@@ -382,9 +413,28 @@ ${afterText}`;
     const args = data?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
     if (!args) return null;
     const parsed = typeof args === "string" ? JSON.parse(args) : args;
+    const after = normalizeScore(parsed.after);
+    const before = normalizeScore(parsed.before);
+    const rawMin = Number(parsed.predictedOptimizedMin);
+    const rawExp = Number(parsed.predictedOptimizedExpected);
+    // Hard cap: never promise more than 40% of remaining headroom on the min.
+    const headroom = Math.max(0, 100 - after.total);
+    const cappedMin = Number.isFinite(rawMin)
+      ? Math.max(after.total, Math.min(after.total + Math.floor(headroom * 0.4), Math.round(rawMin)))
+      : after.total;
+    const cappedExp = Number.isFinite(rawExp)
+      ? Math.max(cappedMin, Math.min(100, Math.round(rawExp)))
+      : cappedMin;
     return {
-      before: normalizeScore(parsed.before),
-      after: normalizeScore(parsed.after),
+      before,
+      after,
+      predictedOptimized: {
+        min: cappedMin,
+        expected: cappedExp,
+        reasoning: typeof parsed.optimizationReasoning === "string"
+          ? parsed.optimizationReasoning.slice(0, 300)
+          : "",
+      },
     };
   } catch (e) {
     console.warn("scoring error:", e instanceof Error ? e.message : String(e));
