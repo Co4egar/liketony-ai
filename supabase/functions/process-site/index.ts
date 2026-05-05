@@ -413,9 +413,28 @@ ${afterText}`;
     const args = data?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
     if (!args) return null;
     const parsed = typeof args === "string" ? JSON.parse(args) : args;
+    const after = normalizeScore(parsed.after);
+    const before = normalizeScore(parsed.before);
+    const rawMin = Number(parsed.predictedOptimizedMin);
+    const rawExp = Number(parsed.predictedOptimizedExpected);
+    // Hard cap: never promise more than 40% of remaining headroom on the min.
+    const headroom = Math.max(0, 100 - after.total);
+    const cappedMin = Number.isFinite(rawMin)
+      ? Math.max(after.total, Math.min(after.total + Math.floor(headroom * 0.4), Math.round(rawMin)))
+      : after.total;
+    const cappedExp = Number.isFinite(rawExp)
+      ? Math.max(cappedMin, Math.min(100, Math.round(rawExp)))
+      : cappedMin;
     return {
-      before: normalizeScore(parsed.before),
-      after: normalizeScore(parsed.after),
+      before,
+      after,
+      predictedOptimized: {
+        min: cappedMin,
+        expected: cappedExp,
+        reasoning: typeof parsed.optimizationReasoning === "string"
+          ? parsed.optimizationReasoning.slice(0, 300)
+          : "",
+      },
     };
   } catch (e) {
     console.warn("scoring error:", e instanceof Error ? e.message : String(e));
