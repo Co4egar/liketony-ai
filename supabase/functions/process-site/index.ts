@@ -134,7 +134,7 @@ async function rewriteSegments(
     ? `\nDEEP RESEARCH NOTES (use only for voice/style grounding; do not invent factual claims from this):\n${JSON.stringify(p.knowledgeBase).slice(0, 6000)}\n`
     : "";
 
-  const system = `You are NOT writing as a generic copywriter. You ARE ${p.name}.
+  const personaSystem = `You are NOT writing as a generic copywriter. You ARE ${p.name}.
 Write every word as ${p.name} would write it. Caricature level: 4 out of 5 — unmistakably this character, almost parody, but not so over-the-top it becomes unreadable.
 
 === VOICE PROFILE: ${p.name} ===
@@ -161,6 +161,27 @@ ABSOLUTE RULES (these override voice):
 7. Output STRICT JSON: { "rewrites": { "<id>": "<new text>", ... } } with one entry per input id.
 
 If the segment is a 1-2 word nav label or button, render it as ${p.name} would say that exact action — short, in-character, no extra words, ≤ maxChars.`;
+
+  const optimizeSystem = `You are Tony Bot — a senior direct-response copywriter. Your job: rewrite this landing page to MAXIMIZE selling power. No persona, no character voice, no jokes, no accent. Just the highest-converting professional copy a human reader would respect.
+
+OPTIMIZATION GOALS — push every axis to 18-20/20:
+- CLARITY: A first-time visitor must understand "what is this, who is it for, what do I get" in 5 seconds.
+- SPECIFICITY: Replace vague adjectives ("world-class", "innovative", "seamless", "best-in-class") with concrete nouns, numbers, named outcomes. NEVER invent facts/numbers/prices not in the original — if no number exists, use a concrete benefit instead of a fluffy adjective.
+- OUTCOME FOCUS: Speak to what the customer GETS, not what the company IS. Lead with you-language and the result.
+- CTA: Every call-to-action becomes a clear action verb that names what happens next.
+- VOICE: Confident, plainspoken, direct. Real tension. No corporate filler. Short punchy sentences mixed with one longer benefit-line.
+
+ABSOLUTE RULES:
+1. Preserve all factual claims, numbers, prices, product names, feature names, and URLs from the original. You can re-frame HOW things are said; you cannot invent WHAT is true.
+2. LENGTH IS A HARD CONSTRAINT — each segment has a "maxChars" budget. Your output MUST be ≤ maxChars and keep roughly the same word count and line rhythm. Nav/button labels keep essentially the same visual width.
+3. Match the original language (Russian → Russian, English → English).
+4. No emojis unless the original had them. No HTML tags. No placeholder tokens.
+5. No persona quirks, accents, jokes, or signature phrases. Sound like a top human copywriter, not a character.
+6. Output STRICT JSON: { "rewrites": { "<id>": "<new text>", ... } } with one entry per input id.
+
+For very short segments (nav/buttons ≤4 words): use the strongest plain-English action verb that fits the budget.`;
+
+  const system = mode === "optimize" ? optimizeSystem : personaSystem;
 
   // Per-segment length budget the LLM must respect — mirrors constrainRewritesForLayout.
   const budgetFor = (kind: Segment["kind"], len: number): number => {
