@@ -355,6 +355,8 @@ function joinSegmentsForScoring(segments: Segment[], rewrittenMap?: Record<numbe
 async function scoreSellingPower(
   segments: Segment[],
   rewrittenMap: Record<number, string>,
+  mode: "persona" | "optimize" = "persona",
+  personaName?: string,
 ): Promise<ScoreResponse | null> {
   const apiKey = Deno.env.get("LOVABLE_API_KEY");
   if (!apiKey) return null;
@@ -364,9 +366,11 @@ async function scoreSellingPower(
   const afterText = joinSegmentsForScoring(segments, rewrittenMap);
   if (!beforeText || !afterText) return null;
 
+  const isPersona = mode === "persona" && personaName;
+
   const system = `You are a hard-nosed direct-response copy critic. Score two versions of the SAME landing page on 5 axes, each 0-20. Be harsh and consistent: most real-world landing pages score 8-13 per axis. The rewrite is NOT automatically better — if the rewrite is worse on an axis, score it lower. Calibrate BEFORE and AFTER against each other.
 
-Axes (each 0-20):
+Selling-power axes (each 0-20):
 - clarity: Is the value prop understandable in 5 seconds? Who is it for, what do they get?
 - specificity: Concrete numbers, names, results vs vague fluff ("world-class", "innovative", "solutions").
 - outcome: Speaks to customer outcomes/benefits vs the company's features and self-praise.
@@ -375,20 +379,60 @@ Axes (each 0-20):
 
 For each axis return a tiny note (max ~80 chars) explaining the score in plain English.
 
-ALSO predict realistic optimization potential: if a top human direct-response copywriter rewrote the AFTER version with NO new factual claims (same product, same numbers, same prices, same length budget per segment), what total 0-100 score could they realistically reach?
+${isPersona ? `ALSO score VOICE FIT for the AFTER version, judging it as a CHARACTER PERFORMANCE by "${personaName}" — NOT as a sales page. This is a separate rubric. A persona rewrite is supposed to be entertaining and unmistakably in-character; that's its job. Score on 5 axes (each 0-20):
+- character: Is this unmistakably ${personaName}? Would a fan recognize the voice?
+- tone: Tonal consistency across the page (no sudden switches into corporate-speak).
+- signature: Use of accent spelling, verbal tics, signature phrases, signature moves.
+- entertainment: Memorable, fun, quotable. Would a reader smile or screenshot a line?
+- shareability: Would this version make a stranger send the link to a friend?
+
+` : ""}ALSO predict realistic optimization potential: if Tony Bot (a top direct-response copywriter with permission to expand hero/headline/CTA length by ~50% but NO permission to invent facts/numbers/prices) rewrote the AFTER version, what total Selling-Power score (0-100) could be realistically reached?
 
 Be CONSERVATIVE and HONEST — under-promise, over-deliver. The user will see this number as a guarantee.
-- "predictedOptimizedMin" = the LOWEST gain you are confident in. If you're not sure the rewrite can clearly improve the page, set min to 0. Most pages can only realistically gain 3-15 points; only obvious fluff-heavy pages can gain 20+.
+- "predictedOptimizedMin" = the LOWEST gain you are confident in. ${isPersona ? "Persona rewrites usually have LOTS of headroom because the persona deliberately sacrifices clarity/specificity for character. If AFTER total < 60, min should be at least +10." : "If you're not sure the rewrite can clearly improve the page, set min to 0. Most pages can only realistically gain 3-15 points."}
 - "predictedOptimizedExpected" = realistic expected total after optimization.
-- The constraint is hard: no inventing facts, no expanding length. So a page that already has clear CTAs, concrete numbers and outcome-focused copy has very little headroom — set min near 0.
-- Never predict a min gain larger than (100 - after_total) * 0.4. Stay grounded.`;
+- The constraint: no inventing facts. Tony Bot CAN expand headline/subhead length up to 1.5× to add specifics that already exist on the page.
+- A page that already has clear CTAs, concrete numbers and outcome-focused copy has very little headroom — set min near 0.
+- Never predict a min total greater than min(95, after_total + (100 - after_total) * 0.55). Stay grounded.`;
 
   const user = `BEFORE (original landing copy):
 ${beforeText}
 
 ---
-AFTER (rewritten landing copy):
+AFTER (rewritten landing copy${isPersona ? `, written in the voice of ${personaName}` : ""}):
 ${afterText}`;
+
+  const properties: Record<string, unknown> = {
+    before: scoreSchema(),
+    after: scoreSchema(),
+    predictedOptimizedMin: {
+      type: "number",
+      minimum: 0,
+      maximum: 100,
+      description: "Conservative LOWER BOUND of total Selling-Power score after Tony Bot optimization. Be honest — under-promise.",
+    },
+    predictedOptimizedExpected: {
+      type: "number",
+      minimum: 0,
+      maximum: 100,
+      description: "Realistic expected total Selling-Power score after Tony Bot optimization.",
+    },
+    optimizationReasoning: {
+      type: "string",
+      description: "1-2 sentences: what specifically Tony Bot can improve and why the gain is bounded.",
+    },
+  };
+  const required = [
+    "before",
+    "after",
+    "predictedOptimizedMin",
+    "predictedOptimizedExpected",
+    "optimizationReasoning",
+  ];
+  if (isPersona) {
+    properties.voiceFit = voiceFitSchema();
+    required.push("voiceFit");
+  }
 
   const tool = {
     type: "function",
@@ -397,33 +441,8 @@ ${afterText}`;
       description: "Return scores for both versions.",
       parameters: {
         type: "object",
-        properties: {
-          before: scoreSchema(),
-          after: scoreSchema(),
-          predictedOptimizedMin: {
-            type: "number",
-            minimum: 0,
-            maximum: 100,
-            description: "Conservative LOWER BOUND of total score after optimization. Be honest — under-promise.",
-          },
-          predictedOptimizedExpected: {
-            type: "number",
-            minimum: 0,
-            maximum: 100,
-            description: "Realistic expected total score after optimization.",
-          },
-          optimizationReasoning: {
-            type: "string",
-            description: "1-2 sentences: what specifically can be improved and why the gain is bounded.",
-          },
-        },
-        required: [
-          "before",
-          "after",
-          "predictedOptimizedMin",
-          "predictedOptimizedExpected",
-          "optimizationReasoning",
-        ],
+        properties,
+        required,
         additionalProperties: false,
       },
     },
@@ -457,12 +476,14 @@ ${afterText}`;
     const parsed = typeof args === "string" ? JSON.parse(args) : args;
     const after = normalizeScore(parsed.after);
     const before = normalizeScore(parsed.before);
+    const voiceFit = isPersona && parsed.voiceFit ? normalizeVoiceFit(parsed.voiceFit) : null;
     const rawMin = Number(parsed.predictedOptimizedMin);
     const rawExp = Number(parsed.predictedOptimizedExpected);
-    // Hard cap: never promise more than 40% of remaining headroom on the min.
+    // Hard cap: never promise more than 55% of remaining headroom on the min.
     const headroom = Math.max(0, 100 - after.total);
+    const ceilingMin = Math.min(95, after.total + Math.floor(headroom * 0.55));
     const cappedMin = Number.isFinite(rawMin)
-      ? Math.max(after.total, Math.min(after.total + Math.floor(headroom * 0.4), Math.round(rawMin)))
+      ? Math.max(after.total, Math.min(ceilingMin, Math.round(rawMin)))
       : after.total;
     const cappedExp = Number.isFinite(rawExp)
       ? Math.max(cappedMin, Math.min(100, Math.round(rawExp)))
@@ -470,6 +491,7 @@ ${afterText}`;
     return {
       before,
       after,
+      voiceFit,
       predictedOptimized: {
         min: cappedMin,
         expected: cappedExp,
@@ -482,6 +504,37 @@ ${afterText}`;
     console.warn("scoring error:", e instanceof Error ? e.message : String(e));
     return null;
   }
+}
+
+function voiceFitSchema() {
+  const axis = {
+    type: "object",
+    properties: {
+      score: { type: "number", minimum: 0, maximum: 20 },
+      note: { type: "string" },
+    },
+    required: ["score", "note"],
+    additionalProperties: false,
+  };
+  return {
+    type: "object",
+    properties: {
+      axes: {
+        type: "object",
+        properties: {
+          character: axis,
+          tone: axis,
+          signature: axis,
+          entertainment: axis,
+          shareability: axis,
+        },
+        required: ["character", "tone", "signature", "entertainment", "shareability"],
+        additionalProperties: false,
+      },
+    },
+    required: ["axes"],
+    additionalProperties: false,
+  };
 }
 
 function scoreSchema() {
