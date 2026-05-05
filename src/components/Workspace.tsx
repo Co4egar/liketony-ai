@@ -22,6 +22,7 @@ import { enhancePreviewHtml } from "@/lib/preview-html";
 import { usePersonaUsage } from "@/hooks/usePersonaUsage";
 import { getPersonaStages } from "@/lib/persona-stages";
 import { TrendingUp } from "lucide-react";
+import { SellingScoreCard } from "./SellingScoreCard";
 
 interface Props {
   initialUrl: string;
@@ -245,6 +246,12 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
                 {changingPersona ? "Cancel" : "Change"}
               </button>
             </div>
+            {result?.sellingScore && !changingPersona && (
+              <SellingScoreCard
+                before={result.sellingScore.before}
+                after={result.sellingScore.after}
+              />
+            )}
             {result && !changingPersona && (
               <Button onClick={handleDownload} disabled={paying} className="w-full justify-start gap-2">
                 {paying ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}

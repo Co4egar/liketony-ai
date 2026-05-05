@@ -205,6 +205,182 @@ ${JSON.stringify(segments.map(s => {
   return map;
 }
 
+interface AxisScore {
+  score: number; // 0..20
+  note: string;  // <= 90 chars
+}
+interface SellingScore {
+  total: number; // 0..100
+  axes: {
+    clarity: AxisScore;
+    specificity: AxisScore;
+    outcome: AxisScore;
+    cta: AxisScore;
+    voice: AxisScore;
+  };
+}
+interface ScoreResponse {
+  before: SellingScore;
+  after: SellingScore;
+}
+
+const AXIS_KEYS = ["clarity", "specificity", "outcome", "cta", "voice"] as const;
+
+function clampAxis(v: unknown): number {
+  const n = typeof v === "number" ? v : Number(v);
+  if (!Number.isFinite(n)) return 10;
+  return Math.max(0, Math.min(20, Math.round(n)));
+}
+
+function normalizeScore(raw: any): SellingScore {
+  const axes: any = {};
+  let total = 0;
+  for (const k of AXIS_KEYS) {
+    const a = raw?.axes?.[k] ?? {};
+    const score = clampAxis(a.score);
+    const note = typeof a.note === "string" ? a.note.slice(0, 120) : "";
+    axes[k] = { score, note };
+    total += score;
+  }
+  return { total, axes };
+}
+
+function joinSegmentsForScoring(segments: Segment[], rewrittenMap?: Record<number, string>): string {
+  // Take a representative slice, prioritize hero/title/text. Cap ~6000 chars.
+  const priority: Record<string, number> = {
+    title: 0, "meta-description": 1, button: 2, text: 3, alt: 4, "aria-label": 5,
+  };
+  const sorted = [...segments].sort(
+    (a, b) => (priority[a.kind] ?? 9) - (priority[b.kind] ?? 9),
+  );
+  const lines: string[] = [];
+  let chars = 0;
+  for (const s of sorted) {
+    const txt = (rewrittenMap ? rewrittenMap[s.id] : undefined) ?? s.text;
+    const clean = txt.replace(/\s+/g, " ").trim();
+    if (!clean) continue;
+    const line = `[${s.kind}] ${clean}`;
+    if (chars + line.length > 6000) break;
+    lines.push(line);
+    chars += line.length + 1;
+  }
+  return lines.join("\n");
+}
+
+async function scoreSellingPower(
+  segments: Segment[],
+  rewrittenMap: Record<number, string>,
+): Promise<ScoreResponse | null> {
+  const apiKey = Deno.env.get("LOVABLE_API_KEY");
+  if (!apiKey) return null;
+  if (segments.length === 0) return null;
+
+  const beforeText = joinSegmentsForScoring(segments);
+  const afterText = joinSegmentsForScoring(segments, rewrittenMap);
+  if (!beforeText || !afterText) return null;
+
+  const system = `You are a hard-nosed direct-response copy critic. Score two versions of the SAME landing page on 5 axes, each 0-20. Be harsh and consistent: most real-world landing pages score 8-13 per axis. The rewrite is NOT automatically better — if the rewrite is worse on an axis, score it lower. Calibrate BEFORE and AFTER against each other.
+
+Axes (each 0-20):
+- clarity: Is the value prop understandable in 5 seconds? Who is it for, what do they get?
+- specificity: Concrete numbers, names, results vs vague fluff ("world-class", "innovative", "solutions").
+- outcome: Speaks to customer outcomes/benefits vs the company's features and self-praise.
+- cta: Clear, action-oriented call(s) to action that tell the visitor what to do next.
+- voice: Tension, hook, distinctive voice vs bland corporate filler.
+
+For each axis return a tiny note (max ~80 chars) explaining the score in plain English.`;
+
+  const user = `BEFORE (original landing copy):
+${beforeText}
+
+---
+AFTER (rewritten landing copy):
+${afterText}`;
+
+  const tool = {
+    type: "function",
+    function: {
+      name: "report_selling_score",
+      description: "Return scores for both versions.",
+      parameters: {
+        type: "object",
+        properties: {
+          before: scoreSchema(),
+          after: scoreSchema(),
+        },
+        required: ["before", "after"],
+        additionalProperties: false,
+      },
+    },
+  };
+
+  try {
+    const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          { role: "system", content: system },
+          { role: "user", content: user },
+        ],
+        tools: [tool],
+        tool_choice: { type: "function", function: { name: "report_selling_score" } },
+        temperature: 0.3,
+      }),
+    });
+    if (!resp.ok) {
+      console.warn("scoring failed:", resp.status, await resp.text().catch(() => ""));
+      return null;
+    }
+    const data = await resp.json();
+    const args = data?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
+    if (!args) return null;
+    const parsed = typeof args === "string" ? JSON.parse(args) : args;
+    return {
+      before: normalizeScore(parsed.before),
+      after: normalizeScore(parsed.after),
+    };
+  } catch (e) {
+    console.warn("scoring error:", e instanceof Error ? e.message : String(e));
+    return null;
+  }
+}
+
+function scoreSchema() {
+  const axis = {
+    type: "object",
+    properties: {
+      score: { type: "number", minimum: 0, maximum: 20 },
+      note: { type: "string" },
+    },
+    required: ["score", "note"],
+    additionalProperties: false,
+  };
+  return {
+    type: "object",
+    properties: {
+      axes: {
+        type: "object",
+        properties: {
+          clarity: axis,
+          specificity: axis,
+          outcome: axis,
+          cta: axis,
+          voice: axis,
+        },
+        required: ["clarity", "specificity", "outcome", "cta", "voice"],
+        additionalProperties: false,
+      },
+    },
+    required: ["axes"],
+    additionalProperties: false,
+  };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -271,6 +447,9 @@ Deno.serve(async (req) => {
     const previewHtml = prepareStaticPreviewHtml(finalHtml, url);
     const originalPreview = prepareStaticPreviewHtml(html, url);
 
+    // Score selling power before/after — non-blocking on failure.
+    const sellingScore = await scoreSellingPower(segments, safeRewrittenMap);
+
     // Persist for share link.
     const supabase = supabaseAdmin;
     const publicId = generatePublicId();
@@ -300,6 +479,7 @@ Deno.serve(async (req) => {
       htmlOriginalPreview: originalPreview,
       segmentCount: segments.length,
       rewrittenCount: Object.keys(safeRewrittenMap).length,
+      sellingScore,
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
