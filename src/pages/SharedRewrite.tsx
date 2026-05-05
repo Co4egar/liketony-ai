@@ -151,6 +151,7 @@ const SharedRewrite = () => {
             <SellingScoreCard
               before={data.selling_score.before}
               after={data.selling_score.after}
+              voiceFit={data.selling_score.voiceFit}
               defaultOpen
             />
           </div>
