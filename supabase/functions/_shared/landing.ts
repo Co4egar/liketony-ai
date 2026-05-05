@@ -20,7 +20,7 @@ const PLACEHOLDER_SUFFIX = "@@";
 const placeholder = (id: number) => `${PLACEHOLDER_PREFIX}${id}${PLACEHOLDER_SUFFIX}`;
 
 const SKIP_TAGS = new Set([
-  "script", "style", "noscript", "code", "pre", "svg", "canvas",
+  "head", "script", "style", "noscript", "code", "pre", "svg", "canvas", "template",
 ]);
 
 const VOID_TAGS = new Set([
@@ -138,6 +138,10 @@ export function extractSegments(html: string): {
     // otherwise filler nodes like "&nbsp;" leak into segments and end up rendered as literal text.
     const stripped = trimmed.replace(/&(?:[a-z][a-z0-9]*|#\d+|#x[0-9a-f]+);/gi, " ").trim();
     if (stripped.length < MIN_LEN) continue;
+    // Do not re-extract placeholders already inserted for <title>/<meta>.
+    // Otherwise a title placeholder can become a visible text segment and be
+    // rendered back as `<!--LTORIG:@@PSWAP_0@@-->`, corrupting the head.
+    if (new RegExp(`${PLACEHOLDER_PREFIX}\\d+${PLACEHOLDER_SUFFIX}`).test(stripped)) continue;
     // Skip if it's just punctuation / numbers
     if (!/[a-zA-Zа-яА-Я]/.test(stripped)) continue;
     if (segments.length >= MAX_SEGMENTS) continue;
@@ -265,7 +269,11 @@ export function prepareStaticPreviewHtml(html: string, sourceUrl: string): strin
   let out = html
     .replace(/<base\b[^>]*>/gi, "")
     .replace(/<style\b[^>]*id=["']liketony-[^"']*["'][\s\S]*?<\/style>/gi, "")
-    .replace(/<script\b[^>]*id=["']liketony-[^"']*["'][\s\S]*?<\/script>/gi, "");
+    // Preview is a static visual snapshot. Running scraped third-party/site JS
+    // inside a same-origin iframe can blank the app shell or mutate the DOM.
+    // Keep scripts in the downloadable HTML, but strip them from previews.
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+    .replace(/\son[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "");
 
   out = out.replace(
     /<img\b([^>]*?)\bdata-original\s*=\s*("([^"]*)"|'([^']*)')([^>]*)>/gi,
