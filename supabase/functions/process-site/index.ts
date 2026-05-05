@@ -358,8 +358,30 @@ ${afterText}`;
         properties: {
           before: scoreSchema(),
           after: scoreSchema(),
+          predictedOptimizedMin: {
+            type: "number",
+            minimum: 0,
+            maximum: 100,
+            description: "Conservative LOWER BOUND of total score after optimization. Be honest — under-promise.",
+          },
+          predictedOptimizedExpected: {
+            type: "number",
+            minimum: 0,
+            maximum: 100,
+            description: "Realistic expected total score after optimization.",
+          },
+          optimizationReasoning: {
+            type: "string",
+            description: "1-2 sentences: what specifically can be improved and why the gain is bounded.",
+          },
         },
-        required: ["before", "after"],
+        required: [
+          "before",
+          "after",
+          "predictedOptimizedMin",
+          "predictedOptimizedExpected",
+          "optimizationReasoning",
+        ],
         additionalProperties: false,
       },
     },
