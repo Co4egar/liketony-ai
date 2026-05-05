@@ -629,7 +629,7 @@ Deno.serve(async (req) => {
     const { template, segments } = extractSegments(html);
     const intensity = typeof body.intensity === "number" ? body.intensity : 50;
     const rewrittenMap = await rewriteSegments(segments, persona, intensity, mode);
-    const safeRewrittenMap = constrainRewritesForLayout(segments, rewrittenMap);
+    const safeRewrittenMap = constrainRewritesForLayout(segments, rewrittenMap, mode);
     const finalHtml = applyRewrites(template, segments, safeRewrittenMap);
 
     // Convert JS-dependent scraped pages into visible static previews.
@@ -637,7 +637,12 @@ Deno.serve(async (req) => {
     const originalPreview = prepareStaticPreviewHtml(html, url);
 
     // Score selling power before/after — non-blocking on failure.
-    const sellingScore = await scoreSellingPower(segments, safeRewrittenMap);
+    const sellingScore = await scoreSellingPower(
+      segments,
+      safeRewrittenMap,
+      mode,
+      mode === "persona" ? persona.name : undefined,
+    );
 
     // Persist for share link.
     const supabase = supabaseAdmin;
