@@ -269,7 +269,11 @@ export function prepareStaticPreviewHtml(html: string, sourceUrl: string): strin
   let out = html
     .replace(/<base\b[^>]*>/gi, "")
     .replace(/<style\b[^>]*id=["']liketony-[^"']*["'][\s\S]*?<\/style>/gi, "")
-    .replace(/<script\b[^>]*id=["']liketony-[^"']*["'][\s\S]*?<\/script>/gi, "");
+    // Preview is a static visual snapshot. Running scraped third-party/site JS
+    // inside a same-origin iframe can blank the app shell or mutate the DOM.
+    // Keep scripts in the downloadable HTML, but strip them from previews.
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+    .replace(/\son[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "");
 
   out = out.replace(
     /<img\b([^>]*?)\bdata-original\s*=\s*("([^"]*)"|'([^']*)')([^>]*)>/gi,
