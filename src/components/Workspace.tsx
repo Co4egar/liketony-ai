@@ -289,18 +289,14 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
                   onClick={handleOptimize}
                   disabled={optimizing || loading}
                   variant="secondary"
-                  className="w-full justify-start gap-2 border border-primary/40 bg-primary/10 hover:bg-primary/20 text-foreground"
+                  className="w-full h-auto min-h-10 py-2 justify-center gap-2 border border-primary/40 bg-primary/10 hover:bg-primary/20 text-foreground whitespace-normal text-center leading-snug"
                   title={pred.reasoning || undefined}
                 >
-                  {optimizing ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Sparkles className="w-4 h-4 text-primary" />
-                  )}
-                  <span className="truncate">
+                  {optimizing && <Loader2 className="w-4 h-4 animate-spin shrink-0" />}
+                  <span className="break-words">
                     {optimizing
                       ? "Tony Bot is rewriting…"
-                      : `Tony Bot: lift Selling Power to ${expected}/100 (min ${after + gain})`}
+                      : `Tony Bot: lift Selling Power to ${expected}/100 (min +${gain})`}
                   </span>
                 </Button>
               );
