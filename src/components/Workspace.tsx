@@ -274,6 +274,7 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
               <SellingScoreCard
                 before={result.sellingScore.before}
                 after={result.sellingScore.after}
+                voiceFit={result.sellingScore.voiceFit}
               />
             )}
             {result?.sellingScore && !changingPersona && !optimized && (() => {
@@ -281,6 +282,7 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
               const pred = result.sellingScore.predictedOptimized;
               if (!pred) return null;
               const gain = Math.max(0, pred.min - after);
+              const expected = Math.max(pred.expected, pred.min);
               if (gain < 3) return null;
               return (
                 <Button
@@ -296,7 +298,9 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
                     <Sparkles className="w-4 h-4 text-primary" />
                   )}
                   <span className="truncate">
-                    {optimizing ? "Tony Bot is rewriting…" : `Increase selling power by +${gain}+ points`}
+                    {optimizing
+                      ? "Tony Bot is rewriting…"
+                      : `Tony Bot: lift Selling Power to ${expected}/100 (min ${after + gain})`}
                   </span>
                 </Button>
               );
