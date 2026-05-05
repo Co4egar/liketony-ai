@@ -713,9 +713,22 @@ Deno.serve(async (req) => {
     const html = await scrape(url);
     const { template, segments } = extractSegments(html);
     const intensity = typeof body.intensity === "number" ? body.intensity : 50;
-    const rewrittenMap = await rewriteSegments(segments, persona, intensity, mode);
-    const safeRewrittenMap = constrainRewritesForLayout(segments, rewrittenMap, mode);
-    const finalHtml = applyRewrites(template, segments, safeRewrittenMap);
+    let rewrittenMap = await rewriteSegments(segments, persona, intensity, mode);
+    let safeRewrittenMap = constrainRewritesForLayout(segments, rewrittenMap, mode);
+    let finalHtml = applyRewrites(template, segments, safeRewrittenMap);
+
+    // Validate; auto-retry once if regressions detected.
+    let validation = await validateRewrite(segments, safeRewrittenMap, finalHtml, template.length);
+    if (!validation.ok) {
+      console.warn("rewrite validation failed, retrying once:", validation.issues);
+      rewrittenMap = await rewriteSegments(segments, persona, intensity, mode);
+      safeRewrittenMap = constrainRewritesForLayout(segments, rewrittenMap, mode);
+      finalHtml = applyRewrites(template, segments, safeRewrittenMap);
+      validation = await validateRewrite(segments, safeRewrittenMap, finalHtml, template.length);
+      if (!validation.ok) {
+        console.warn("rewrite validation still failed after retry:", validation.issues);
+      }
+    }
 
     // Convert JS-dependent scraped pages into visible static previews.
     const previewHtml = prepareStaticPreviewHtml(finalHtml, url);
