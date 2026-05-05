@@ -128,8 +128,12 @@ export function extractSegments(html: string): {
     const raw = part;
     const trimmed = raw.trim();
     if (trimmed.length < MIN_LEN) continue;
+    // Strip HTML entities (e.g. &nbsp;, &amp;, &#160;) before checking for real letters,
+    // otherwise filler nodes like "&nbsp;" leak into segments and end up rendered as literal text.
+    const stripped = trimmed.replace(/&(?:[a-z][a-z0-9]*|#\d+|#x[0-9a-f]+);/gi, " ").trim();
+    if (stripped.length < MIN_LEN) continue;
     // Skip if it's just punctuation / numbers
-    if (!/[a-zA-Zа-яА-Я]/.test(trimmed)) continue;
+    if (!/[a-zA-Zа-яА-Я]/.test(stripped)) continue;
     if (segments.length >= MAX_SEGMENTS) continue;
     const id = nextId++;
     const kind: Segment["kind"] = openStack.some((entry) => entry.isButton) ? "button" : "text";
