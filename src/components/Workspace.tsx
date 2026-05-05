@@ -21,7 +21,7 @@ import { RewriteResult } from "@/types/rewrite";
 import { enhancePreviewHtml } from "@/lib/preview-html";
 import { usePersonaUsage } from "@/hooks/usePersonaUsage";
 import { getPersonaStages } from "@/lib/persona-stages";
-import { TrendingUp, Sparkles } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 import { SellingScoreCard } from "./SellingScoreCard";
 
 interface Props {
