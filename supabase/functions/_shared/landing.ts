@@ -432,13 +432,21 @@ img[data-original]{visibility:visible!important;opacity:1!important;}
       }
       if(overflow) restore(atom);
     });
-    each(document.querySelectorAll('.t396__elem[data-elem-type="button"]'),function(el){
+    var sensitive=[];
+    each(document.querySelectorAll('.t396__elem[data-elem-type="button"],.t396__elem[data-elem-type="text"]'),function(el){
+      var atom=el.querySelector('.tn-atom');
+      if(atom && /<!--LTORIG:/.test(atom.innerHTML) && (el.getAttribute('data-elem-type')==='button' || atom.querySelector('a'))) sensitive.push(el);
+    });
+    each(sensitive,function(el){
       var r1=el.getBoundingClientRect();
-      each(document.querySelectorAll('.t396__elem[data-elem-type="button"]'),function(other){
+      each(sensitive,function(other){
         if(other===el) return;
         var r2=other.getBoundingClientRect();
-        if(r1.right>r2.left && r1.left<r2.right && r1.bottom>r2.top && r1.top<r2.bottom){
+        var sameRow=r1.bottom>r2.top+2 && r1.top<r2.bottom-2;
+        var touching=sameRow && !(r1.right<r2.left-6 || r2.right<r1.left-6);
+        if(touching){
           var atom=el.querySelector('.tn-atom'); if(atom) restore(atom);
+          var otherAtom=other.querySelector('.tn-atom'); if(otherAtom) restore(otherAtom);
         }
       });
     });
