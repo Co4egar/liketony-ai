@@ -263,6 +263,91 @@ ${JSON.stringify(segments.map(s => {
   return map;
 }
 
+// ---- Post-rewrite validation -----------------------------------------------
+// Combines cheap structural checks with a single Lovable AI self-review call
+// (gemini-2.5-flash-lite) to catch regressions before we persist the rewrite.
+interface ValidationResult {
+  ok: boolean;
+  issues: string[];
+  coverage: number; // 0..1 share of segments that were actually rewritten
+}
+
+async function validateRewrite(
+  segments: Segment[],
+  rewrittenMap: Record<number, string>,
+  finalHtml: string,
+  templateLength: number,
+): Promise<ValidationResult> {
+  const issues: string[] = [];
+
+  // 1. Structural: coverage of rewritten segments.
+  const rewrittenCount = Object.keys(rewrittenMap).length;
+  const coverage = segments.length > 0 ? rewrittenCount / segments.length : 1;
+  if (coverage < 0.5) issues.push(`low_coverage:${Math.round(coverage * 100)}%`);
+
+  // 2. Structural: final HTML must not collapse vs. template.
+  if (templateLength > 0 && finalHtml.length < templateLength * 0.6) {
+    issues.push(`html_shrunk:${finalHtml.length}/${templateLength}`);
+  }
+
+  // 3. Structural: tag balance sanity (very rough — catches catastrophic breakage).
+  const openTags = (finalHtml.match(/<[a-zA-Z][^>]*>/g) || []).length;
+  const closeTags = (finalHtml.match(/<\/[a-zA-Z][^>]*>/g) || []).length;
+  if (openTags > 0 && closeTags / openTags < 0.3) {
+    issues.push(`tag_imbalance:${closeTags}/${openTags}`);
+  }
+
+  // 4. AI self-review: cheap pass on a sample of before/after pairs.
+  const apiKey = Deno.env.get("LOVABLE_API_KEY");
+  if (apiKey && rewrittenCount > 0) {
+    const samples = segments
+      .filter((s) => rewrittenMap[s.id] && (s.kind === "title" || s.kind === "text" || s.kind === "button"))
+      .slice(0, 20)
+      .map((s) => ({
+        id: s.id,
+        kind: s.kind,
+        before: s.text.replace(/\s+/g, " ").trim().slice(0, 240),
+        after: rewrittenMap[s.id].replace(/\s+/g, " ").trim().slice(0, 240),
+      }));
+
+    if (samples.length > 0) {
+      try {
+        const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash-lite",
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You audit a landing-page rewrite for regressions. Flag ONLY clear problems: empty/garbage output, HTML/markup leaked into text, wrong language vs original, total loss of factual meaning, placeholder tokens like {{x}}. Cosmetic style changes are fine. Output JSON {\"ok\":bool,\"issues\":[\"short reason\"]}.",
+              },
+              { role: "user", content: JSON.stringify(samples) },
+            ],
+            temperature: 0,
+            response_format: { type: "json_object" },
+          }),
+        });
+        if (resp.ok) {
+          const data = await resp.json();
+          const content: string = data?.choices?.[0]?.message?.content ?? "{}";
+          const parsed = JSON.parse(content);
+          if (parsed?.ok === false && Array.isArray(parsed.issues)) {
+            for (const x of parsed.issues.slice(0, 5)) {
+              if (typeof x === "string" && x.trim()) issues.push(`ai:${x.slice(0, 80)}`);
+            }
+          }
+        }
+      } catch (e) {
+        console.warn("self-review failed:", e instanceof Error ? e.message : String(e));
+      }
+    }
+  }
+
+  return { ok: issues.length === 0, issues, coverage };
+}
+
 interface AxisScore {
   score: number; // 0..20
   note: string;  // <= 90 chars
@@ -628,9 +713,22 @@ Deno.serve(async (req) => {
     const html = await scrape(url);
     const { template, segments } = extractSegments(html);
     const intensity = typeof body.intensity === "number" ? body.intensity : 50;
-    const rewrittenMap = await rewriteSegments(segments, persona, intensity, mode);
-    const safeRewrittenMap = constrainRewritesForLayout(segments, rewrittenMap, mode);
-    const finalHtml = applyRewrites(template, segments, safeRewrittenMap);
+    let rewrittenMap = await rewriteSegments(segments, persona, intensity, mode);
+    let safeRewrittenMap = constrainRewritesForLayout(segments, rewrittenMap, mode);
+    let finalHtml = applyRewrites(template, segments, safeRewrittenMap);
+
+    // Validate; auto-retry once if regressions detected.
+    let validation = await validateRewrite(segments, safeRewrittenMap, finalHtml, template.length);
+    if (!validation.ok) {
+      console.warn("rewrite validation failed, retrying once:", validation.issues);
+      rewrittenMap = await rewriteSegments(segments, persona, intensity, mode);
+      safeRewrittenMap = constrainRewritesForLayout(segments, rewrittenMap, mode);
+      finalHtml = applyRewrites(template, segments, safeRewrittenMap);
+      validation = await validateRewrite(segments, safeRewrittenMap, finalHtml, template.length);
+      if (!validation.ok) {
+        console.warn("rewrite validation still failed after retry:", validation.issues);
+      }
+    }
 
     // Convert JS-dependent scraped pages into visible static previews.
     const previewHtml = prepareStaticPreviewHtml(finalHtml, url);
