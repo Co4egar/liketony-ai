@@ -190,11 +190,21 @@ For very short segments (nav/buttons ≤4 words): use the strongest plain-Englis
   const system = mode === "optimize" ? optimizeSystem : personaSystem;
 
   // Per-segment length budget the LLM must respect — mirrors constrainRewritesForLayout.
+  // Tony Bot (optimize) gets much wider budgets so it can actually inject specifics,
+  // outcomes, numbers, and stronger CTAs. Persona stays tight to preserve layout.
+  const opt = mode === "optimize";
   const budgetFor = (kind: Segment["kind"], len: number): number => {
-    if (kind === "button") return len;
-    if (kind === "title") return Math.max(len + 6, Math.ceil(len * 1.12));
-    if (kind === "meta-description") return Math.max(len + 12, Math.ceil(len * 1.18));
+    if (kind === "button") return opt ? Math.max(len + 4, Math.ceil(len * 1.25)) : len;
+    if (kind === "title") return Math.max(len + (opt ? 16 : 6), Math.ceil(len * (opt ? 1.4 : 1.12)));
+    if (kind === "meta-description") return Math.max(len + (opt ? 30 : 12), Math.ceil(len * (opt ? 1.4 : 1.18)));
     if (kind === "alt" || kind === "aria-label") return Math.max(len + 4, Math.ceil(len * 1.1));
+    if (opt) {
+      if (len <= 12) return Math.max(len + 4, Math.ceil(len * 1.3));
+      if (len <= 25) return Math.max(len + 8, Math.ceil(len * 1.4));
+      if (len <= 60) return Math.max(len + 14, Math.ceil(len * 1.45));
+      if (len <= 140) return Math.max(len + 28, Math.ceil(len * 1.5));
+      return Math.max(len + 60, Math.ceil(len * 1.55));
+    }
     if (len <= 12) return len;
     if (len <= 25) return Math.max(len + 2, Math.ceil(len * 1.08));
     if (len <= 60) return Math.max(len + 4, Math.ceil(len * 1.1));
