@@ -146,7 +146,29 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
     setUrl(targetUrl);
     setPersona(targetPersona);
     setChangingPersona(false);
+    setOptimized(false);
     setPending({ url: targetUrl, persona: targetPersona, intensity: targetIntensity });
+  };
+
+  const handleOptimize = async () => {
+    if (!result) return;
+    setOptimizing(true);
+    setError(null);
+    try {
+      const { data, error: invokeError } = await supabase.functions.invoke("process-site", {
+        body: { url: result.url, intensity: 70, mode: "optimize" },
+      });
+      if (invokeError) throw invokeError;
+      if (data?.error) throw new Error(data.error);
+      setResult(data as RewriteResult);
+      setView("rewritten");
+      setOptimized(true);
+      toast.success("Tony Bot optimized your page for max conversion");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Optimization failed");
+    } finally {
+      setOptimizing(false);
+    }
   };
 
   const handleDownload = async () => {
