@@ -276,6 +276,29 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
                 after={result.sellingScore.after}
               />
             )}
+            {result?.sellingScore && !changingPersona && !optimized && (() => {
+              const after = result.sellingScore.after.total;
+              const target = Math.max(after + 5, 92);
+              const gain = Math.max(0, Math.min(100, target) - after);
+              if (gain < 4) return null;
+              return (
+                <Button
+                  onClick={handleOptimize}
+                  disabled={optimizing || loading}
+                  variant="secondary"
+                  className="w-full justify-start gap-2 border border-primary/40 bg-primary/10 hover:bg-primary/20 text-foreground"
+                >
+                  {optimizing ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="w-4 h-4 text-primary" />
+                  )}
+                  <span className="truncate">
+                    {optimizing ? "Tony Bot is rewriting…" : `Increase selling power by +${gain} points`}
+                  </span>
+                </Button>
+              );
+            })()}
             {result && !changingPersona && (
               <Button onClick={handleDownload} disabled={paying} className="w-full justify-start gap-2">
                 {paying ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
