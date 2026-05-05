@@ -16,6 +16,17 @@ export interface SellingScore {
   };
 }
 
+export interface VoiceFit {
+  total: number; // 0..100
+  axes: {
+    character: SellingScoreAxis;
+    tone: SellingScoreAxis;
+    signature: SellingScoreAxis;
+    entertainment: SellingScoreAxis;
+    shareability: SellingScoreAxis;
+  };
+}
+
 export interface PredictedOptimization {
   min: number;      // conservative lower bound, 0..100
   expected: number; // realistic expected, 0..100
@@ -25,6 +36,7 @@ export interface PredictedOptimization {
 export interface SellingScoreBundle {
   before: SellingScore;
   after: SellingScore;
+  voiceFit?: VoiceFit | null;
   predictedOptimized?: PredictedOptimization | null;
 }
 
