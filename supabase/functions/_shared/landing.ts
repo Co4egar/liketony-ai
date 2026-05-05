@@ -49,6 +49,12 @@ export function extractSegments(html: string): {
   const segments: Segment[] = [];
   let nextId = 0;
 
+  // 0) Strip HTML comments before tag-splitting. Our naive splitter treats
+  // `<!-- ... -->` as a single tag, which leaks comment bodies (often inline
+  // tracker JS like `!function(t,o,c,k){...}`) into visible text segments and
+  // ends up rendered as raw code in the preview.
+  html = html.replace(/<!--[\s\S]*?-->/g, "");
+
   // 1) <title>
   let template = html.replace(
     /(<title[^>]*>)([\s\S]*?)(<\/title>)/i,
