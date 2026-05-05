@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { CheckCircle2, Loader2, Mail, Sparkles, ArrowLeft } from "lucide-react";
+import { CheckCircle2, Loader2, Mail, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 
@@ -77,7 +77,7 @@ const Success = () => {
             </div>
 
             <div className="w-full rounded-xl border border-border/60 bg-background/40 p-4 text-left flex gap-3">
-              <Sparkles className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+              <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
               <div className="text-sm">
                 <p className="font-medium text-foreground">New heroes every day</p>
                 <p className="text-muted-foreground">

@@ -1,5 +1,5 @@
 import { memo, useEffect, useMemo, useState } from "react";
-import { Check, Search, Sparkles, Loader2, TrendingUp } from "lucide-react";
+import { Check, Search, Loader2, TrendingUp } from "lucide-react";
 import { CATEGORIES, PERSONAS, Persona, PersonaCategory } from "@/data/personas";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -92,7 +92,6 @@ export function PersonaCatalog({ selectedId, onSelect, layout = "grid" }: Props)
         </div>
         <div className="w-full max-w-md space-y-2 sm:w-auto">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-primary shrink-0" />
             <Input
               value={customName}
               onChange={(e) => setCustomName(e.target.value)}
