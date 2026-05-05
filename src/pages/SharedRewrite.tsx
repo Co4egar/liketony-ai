@@ -145,13 +145,24 @@ const SharedRewrite = () => {
           </a>
         </div>
       </header>
-      <iframe
-        key={view}
-        title="Shared rewrite"
-        srcDoc={previewHtml}
-        sandbox="allow-same-origin allow-scripts allow-popups"
-        className="flex-1 w-full bg-white"
-      />
+      <div className="relative flex-1">
+        {data.selling_score && (
+          <div className="absolute top-3 right-3 z-10 w-[300px] max-w-[calc(100%-1.5rem)]">
+            <SellingScoreCard
+              before={data.selling_score.before}
+              after={data.selling_score.after}
+              defaultOpen
+            />
+          </div>
+        )}
+        <iframe
+          key={view}
+          title="Shared rewrite"
+          srcDoc={previewHtml}
+          sandbox="allow-same-origin allow-scripts allow-popups"
+          className="absolute inset-0 w-full h-full bg-white"
+        />
+      </div>
     </div>
   );
 };
