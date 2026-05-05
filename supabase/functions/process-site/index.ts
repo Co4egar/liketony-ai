@@ -510,7 +510,7 @@ Deno.serve(async (req) => {
 
     // Bump global persona usage counter (fire-and-forget).
     supabase
-      .rpc("increment_persona_usage", { p_persona_id: body.persona.id })
+      .rpc("increment_persona_usage", { p_persona_id: persona.id })
       .then(({ error }) => {
         if (error) console.error("increment_persona_usage failed:", error);
       });
