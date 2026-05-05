@@ -51,6 +51,8 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
   const reqRef = useRef(0);
   const usage = usePersonaUsage();
   const [paying, setPaying] = useState(false);
+  const [optimizing, setOptimizing] = useState(false);
+  const [optimized, setOptimized] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState(false);
 
   // Show confirmation after returning from Stripe checkout
