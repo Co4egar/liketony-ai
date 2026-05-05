@@ -264,6 +264,7 @@ interface SellingScore {
 interface ScoreResponse {
   before: SellingScore;
   after: SellingScore;
+  predictedOptimized?: { min: number; expected: number; reasoning: string } | null;
 }
 
 const AXIS_KEYS = ["clarity", "specificity", "outcome", "cta", "voice"] as const;
