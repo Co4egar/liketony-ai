@@ -21,7 +21,7 @@ import { RewriteResult } from "@/types/rewrite";
 import { enhancePreviewHtml } from "@/lib/preview-html";
 import { usePersonaUsage } from "@/hooks/usePersonaUsage";
 import { getPersonaStages } from "@/lib/persona-stages";
-import { TrendingUp } from "lucide-react";
+import { TrendingUp, Sparkles } from "lucide-react";
 import { SellingScoreCard } from "./SellingScoreCard";
 
 interface Props {
@@ -51,6 +51,8 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
   const reqRef = useRef(0);
   const usage = usePersonaUsage();
   const [paying, setPaying] = useState(false);
+  const [optimizing, setOptimizing] = useState(false);
+  const [optimized, setOptimized] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState(false);
 
   // Show confirmation after returning from Stripe checkout
@@ -144,7 +146,29 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
     setUrl(targetUrl);
     setPersona(targetPersona);
     setChangingPersona(false);
+    setOptimized(false);
     setPending({ url: targetUrl, persona: targetPersona, intensity: targetIntensity });
+  };
+
+  const handleOptimize = async () => {
+    if (!result) return;
+    setOptimizing(true);
+    setError(null);
+    try {
+      const { data, error: invokeError } = await supabase.functions.invoke("process-site", {
+        body: { url: result.url, intensity: 70, mode: "optimize" },
+      });
+      if (invokeError) throw invokeError;
+      if (data?.error) throw new Error(data.error);
+      setResult(data as RewriteResult);
+      setView("rewritten");
+      setOptimized(true);
+      toast.success("Tony Bot optimized your page for max conversion");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Optimization failed");
+    } finally {
+      setOptimizing(false);
+    }
   };
 
   const handleDownload = async () => {
@@ -252,6 +276,29 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
                 after={result.sellingScore.after}
               />
             )}
+            {result?.sellingScore && !changingPersona && !optimized && (() => {
+              const after = result.sellingScore.after.total;
+              const target = Math.max(after + 5, 92);
+              const gain = Math.max(0, Math.min(100, target) - after);
+              if (gain < 4) return null;
+              return (
+                <Button
+                  onClick={handleOptimize}
+                  disabled={optimizing || loading}
+                  variant="secondary"
+                  className="w-full justify-start gap-2 border border-primary/40 bg-primary/10 hover:bg-primary/20 text-foreground"
+                >
+                  {optimizing ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="w-4 h-4 text-primary" />
+                  )}
+                  <span className="truncate">
+                    {optimizing ? "Tony Bot is rewriting…" : `Increase selling power by +${gain} points`}
+                  </span>
+                </Button>
+              );
+            })()}
             {result && !changingPersona && (
               <Button onClick={handleDownload} disabled={paying} className="w-full justify-start gap-2">
                 {paying ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}

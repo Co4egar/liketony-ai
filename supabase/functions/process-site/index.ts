@@ -20,7 +20,8 @@ interface PersonaExample {
 interface RequestBody {
   url: string;
   intensity?: number; // 0 = chill, 100 = aggressive sales
-  persona: {
+  mode?: "persona" | "optimize"; // optimize = Tony Bot, max-conversion, no persona caricature
+  persona?: {
     id: string;
     name: string;
     voicePrompt: string;
@@ -36,6 +37,25 @@ interface RequestBody {
     knowledgeBase?: Record<string, unknown>;
   };
 }
+
+const TONY_BOT_PERSONA: NonNullable<RequestBody["persona"]> = {
+  id: "tony-bot",
+  name: "Tony Bot",
+  voicePrompt:
+    "You are Tony Bot — a top-tier direct-response copywriter (Hormozi × Halbert × Sugarman). You write the highest-converting version of any landing page: crystal-clear value prop, concrete outcomes, specificity over fluff, strong CTAs, real tension. No persona caricature, no accent, no jokes — just the most persuasive, on-brand sales copy a human reader would respect and click.",
+  tone: "Confident, direct, plainspoken. Earns trust with specifics, not adjectives.",
+  rhythm: "Short sentences. Punchy. Then one longer line that lands the benefit.",
+  vocabulary: "Concrete nouns and verbs. Numbers, names, outcomes. Cut filler words: 'world-class', 'innovative', 'solutions', 'leverage', 'seamless'.",
+  signatureMoves:
+    "Lead with the outcome the customer gets. Quantify (numbers, time, $). Replace company-speak with you-language. Make CTAs verbs of action. Add micro-proof where it fits.",
+  taboos:
+    "No buzzwords. No corporate fluff. No emojis. No fake urgency. No invented facts/numbers/prices. No persona quirks or accents.",
+  accent: "",
+  verbalTics: "",
+  signaturePhrases: [],
+  examples: [],
+  knowledgeBase: {},
+};
 
 const MAX_HTML_BYTES = 8_000_000; // 8MB safety cap
 const FIRECRAWL_URL = "https://api.firecrawl.dev/v2/scrape";
@@ -81,8 +101,9 @@ async function scrape(url: string): Promise<string> {
 
 async function rewriteSegments(
   segments: Segment[],
-  persona: RequestBody["persona"],
+  persona: NonNullable<RequestBody["persona"]>,
   intensity: number,
+  mode: "persona" | "optimize" = "persona",
 ): Promise<Record<number, string>> {
   if (segments.length === 0) return {};
   const apiKey = Deno.env.get("LOVABLE_API_KEY");
@@ -113,7 +134,7 @@ async function rewriteSegments(
     ? `\nDEEP RESEARCH NOTES (use only for voice/style grounding; do not invent factual claims from this):\n${JSON.stringify(p.knowledgeBase).slice(0, 6000)}\n`
     : "";
 
-  const system = `You are NOT writing as a generic copywriter. You ARE ${p.name}.
+  const personaSystem = `You are NOT writing as a generic copywriter. You ARE ${p.name}.
 Write every word as ${p.name} would write it. Caricature level: 4 out of 5 — unmistakably this character, almost parody, but not so over-the-top it becomes unreadable.
 
 === VOICE PROFILE: ${p.name} ===
@@ -140,6 +161,27 @@ ABSOLUTE RULES (these override voice):
 7. Output STRICT JSON: { "rewrites": { "<id>": "<new text>", ... } } with one entry per input id.
 
 If the segment is a 1-2 word nav label or button, render it as ${p.name} would say that exact action — short, in-character, no extra words, ≤ maxChars.`;
+
+  const optimizeSystem = `You are Tony Bot — a senior direct-response copywriter. Your job: rewrite this landing page to MAXIMIZE selling power. No persona, no character voice, no jokes, no accent. Just the highest-converting professional copy a human reader would respect.
+
+OPTIMIZATION GOALS — push every axis to 18-20/20:
+- CLARITY: A first-time visitor must understand "what is this, who is it for, what do I get" in 5 seconds.
+- SPECIFICITY: Replace vague adjectives ("world-class", "innovative", "seamless", "best-in-class") with concrete nouns, numbers, named outcomes. NEVER invent facts/numbers/prices not in the original — if no number exists, use a concrete benefit instead of a fluffy adjective.
+- OUTCOME FOCUS: Speak to what the customer GETS, not what the company IS. Lead with you-language and the result.
+- CTA: Every call-to-action becomes a clear action verb that names what happens next.
+- VOICE: Confident, plainspoken, direct. Real tension. No corporate filler. Short punchy sentences mixed with one longer benefit-line.
+
+ABSOLUTE RULES:
+1. Preserve all factual claims, numbers, prices, product names, feature names, and URLs from the original. You can re-frame HOW things are said; you cannot invent WHAT is true.
+2. LENGTH IS A HARD CONSTRAINT — each segment has a "maxChars" budget. Your output MUST be ≤ maxChars and keep roughly the same word count and line rhythm. Nav/button labels keep essentially the same visual width.
+3. Match the original language (Russian → Russian, English → English).
+4. No emojis unless the original had them. No HTML tags. No placeholder tokens.
+5. No persona quirks, accents, jokes, or signature phrases. Sound like a top human copywriter, not a character.
+6. Output STRICT JSON: { "rewrites": { "<id>": "<new text>", ... } } with one entry per input id.
+
+For very short segments (nav/buttons ≤4 words): use the strongest plain-English action verb that fits the budget.`;
+
+  const system = mode === "optimize" ? optimizeSystem : personaSystem;
 
   // Per-segment length budget the LLM must respect — mirrors constrainRewritesForLayout.
   const budgetFor = (kind: Segment["kind"], len: number): number => {
@@ -386,7 +428,9 @@ Deno.serve(async (req) => {
 
   try {
     const body = (await req.json()) as RequestBody;
-    if (!body?.url || !body?.persona?.voicePrompt) {
+    const mode: "persona" | "optimize" = body.mode === "optimize" ? "optimize" : "persona";
+    const persona = mode === "optimize" ? TONY_BOT_PERSONA : body.persona;
+    if (!body?.url || !persona?.voicePrompt) {
       return json({ error: "url and persona required" }, 400);
     }
 
@@ -439,7 +483,7 @@ Deno.serve(async (req) => {
     const html = await scrape(url);
     const { template, segments } = extractSegments(html);
     const intensity = typeof body.intensity === "number" ? body.intensity : 50;
-    const rewrittenMap = await rewriteSegments(segments, body.persona, intensity);
+    const rewrittenMap = await rewriteSegments(segments, persona, intensity, mode);
     const safeRewrittenMap = constrainRewritesForLayout(segments, rewrittenMap);
     const finalHtml = applyRewrites(template, segments, safeRewrittenMap);
 
@@ -456,8 +500,8 @@ Deno.serve(async (req) => {
     const { error: insertErr } = await supabase.from("rewrites").insert({
       public_id: publicId,
       source_url: url,
-      persona_id: body.persona.id,
-      persona_name: body.persona.name,
+      persona_id: persona.id,
+      persona_name: persona.name,
       html_original: html,
       html_rewritten: finalHtml,
       selling_score: sellingScore,
@@ -466,7 +510,7 @@ Deno.serve(async (req) => {
 
     // Bump global persona usage counter (fire-and-forget).
     supabase
-      .rpc("increment_persona_usage", { p_persona_id: body.persona.id })
+      .rpc("increment_persona_usage", { p_persona_id: persona.id })
       .then(({ error }) => {
         if (error) console.error("increment_persona_usage failed:", error);
       });
