@@ -29,6 +29,10 @@ const VOID_TAGS = new Set([
 
 function isButtonishOpenTag(tagHtml: string, tag: string): boolean {
   if (tag === "button") return true;
+  // Treat links as layout-sensitive controls too. Most scraped nav items and
+  // CTA buttons are <a> tags, and expanding them is what makes menus/buttons
+  // visually run into each other across many different site builders.
+  if (tag === "a" && /\bhref\s*=/i.test(tagHtml)) return true;
   return /\bdata-elem-type\s*=\s*(["'])button\1/i.test(tagHtml) ||
     /\brole\s*=\s*(["'])button\1/i.test(tagHtml) ||
     /\bclass\s*=\s*(["'])[^"']*(?:\bt-btn\b|\bbtn\b|button|t-submit)[^"']*\1/i.test(tagHtml);
