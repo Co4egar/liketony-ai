@@ -181,6 +181,7 @@ export function applyRewrites(
 export function constrainRewritesForLayout(
   segments: Segment[],
   rewritten: Record<number, string>,
+  mode: "persona" | "optimize" = "persona",
 ): Record<number, string> {
   const safe: Record<number, string> = {};
   const visualWeight = (s: string) => Array.from(s).reduce((sum, ch) => {
@@ -199,6 +200,10 @@ export function constrainRewritesForLayout(
     }
     return out.replace(/[\s,;:—-]+$/g, "").trim();
   };
+  // Tony Bot (optimize) gets wider budgets so it can actually inject specifics,
+  // outcomes, numbers, and stronger CTAs. The fit-text JS in the preview will
+  // restore the original if a particular box still overflows visually.
+  const opt = mode === "optimize";
   for (const seg of segments) {
     const value = rewritten[seg.id];
     if (typeof value !== "string") continue;
@@ -207,23 +212,36 @@ export function constrainRewritesForLayout(
 
     const original = seg.text.replace(/\s+/g, " ").trim();
     const len = Array.from(original).length;
-    // Hard layout preservation: keep the visual footprint close to the
-    // original, because scraped builders use fixed-position text boxes.
     const max =
-      seg.kind === "button" ? len :
-      seg.kind === "title" ? Math.max(len + 6, Math.ceil(len * 1.12)) :
-      seg.kind === "meta-description" ? Math.max(len + 12, Math.ceil(len * 1.18)) :
+      seg.kind === "button" ? (opt ? Math.max(len + 4, Math.ceil(len * 1.25)) : len) :
+      seg.kind === "title" ? Math.max(len + (opt ? 16 : 6), Math.ceil(len * (opt ? 1.4 : 1.12))) :
+      seg.kind === "meta-description" ? Math.max(len + (opt ? 30 : 12), Math.ceil(len * (opt ? 1.4 : 1.18))) :
       seg.kind === "alt" || seg.kind === "aria-label" ? Math.max(len + 4, Math.ceil(len * 1.1)) :
-      len <= 12 ? len :
-      len <= 25 ? Math.max(len + 2, Math.ceil(len * 1.08)) :
-      len <= 60 ? Math.max(len + 4, Math.ceil(len * 1.1)) :
-      len <= 140 ? Math.max(len + 10, Math.ceil(len * 1.15)) :
-      Math.max(len + 24, Math.ceil(len * 1.18));
+      opt ? (
+        len <= 12 ? Math.max(len + 4, Math.ceil(len * 1.3)) :
+        len <= 25 ? Math.max(len + 8, Math.ceil(len * 1.4)) :
+        len <= 60 ? Math.max(len + 14, Math.ceil(len * 1.45)) :
+        len <= 140 ? Math.max(len + 28, Math.ceil(len * 1.5)) :
+        Math.max(len + 60, Math.ceil(len * 1.55))
+      ) : (
+        len <= 12 ? len :
+        len <= 25 ? Math.max(len + 2, Math.ceil(len * 1.08)) :
+        len <= 60 ? Math.max(len + 4, Math.ceil(len * 1.1)) :
+        len <= 140 ? Math.max(len + 10, Math.ceil(len * 1.15)) :
+        Math.max(len + 24, Math.ceil(len * 1.18))
+      );
     const maxWeight = visualWeight(original) * (
-      seg.kind === "button" ? 0.92 :
-      len <= 12 ? 1.02 :
-      len <= 60 ? 1.08 :
-      1.14
+      opt ? (
+        seg.kind === "button" ? 1.2 :
+        len <= 12 ? 1.3 :
+        len <= 60 ? 1.4 :
+        1.5
+      ) : (
+        seg.kind === "button" ? 0.92 :
+        len <= 12 ? 1.02 :
+        len <= 60 ? 1.08 :
+        1.14
+      )
     );
 
     safe[seg.id] = clampToBudget(compact, max, maxWeight) || original;
