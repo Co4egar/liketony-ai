@@ -227,7 +227,7 @@ export function constrainRewritesForLayout(
     const original = seg.text.replace(/\s+/g, " ").trim();
     const len = Array.from(original).length;
     const max =
-      seg.kind === "button" ? (opt ? Math.max(len + 4, Math.ceil(len * 1.25)) : len) :
+      seg.kind === "button" ? (opt ? Math.max(len + 2, Math.ceil(len * 1.12)) : len) :
       seg.kind === "title" ? Math.max(len + (opt ? 16 : 6), Math.ceil(len * (opt ? 1.4 : 1.12))) :
       seg.kind === "meta-description" ? Math.max(len + (opt ? 30 : 12), Math.ceil(len * (opt ? 1.4 : 1.18))) :
       seg.kind === "alt" || seg.kind === "aria-label" ? Math.max(len + 4, Math.ceil(len * 1.1)) :
@@ -246,7 +246,7 @@ export function constrainRewritesForLayout(
       );
     const maxWeight = visualWeight(original) * (
       opt ? (
-        seg.kind === "button" ? 1.2 :
+        seg.kind === "button" ? 1.08 :
         len <= 12 ? 1.3 :
         len <= 60 ? 1.4 :
         1.5
