@@ -76,14 +76,11 @@ const Success = () => {
               </div>
             </div>
 
-            <div className="w-full rounded-xl border border-border/60 bg-background/40 p-4 text-left flex gap-3">
-              <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
-              <div className="text-sm">
-                <p className="font-medium text-foreground">New heroes every day</p>
-                <p className="text-muted-foreground">
-                  We're adding fresh personas constantly — come back soon to rewrite your landing in another voice.
-                </p>
-              </div>
+            <div className="w-full rounded-xl border border-border/60 bg-background/40 p-4 text-left">
+              <p className="font-medium text-foreground text-sm">New heroes every day</p>
+              <p className="text-sm text-muted-foreground">
+                We're adding fresh personas constantly — come back soon to rewrite your landing in another voice.
+              </p>
             </div>
 
             <p className="text-sm text-muted-foreground">
