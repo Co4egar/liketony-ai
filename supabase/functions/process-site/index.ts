@@ -101,8 +101,9 @@ async function scrape(url: string): Promise<string> {
 
 async function rewriteSegments(
   segments: Segment[],
-  persona: RequestBody["persona"],
+  persona: NonNullable<RequestBody["persona"]>,
   intensity: number,
+  mode: "persona" | "optimize" = "persona",
 ): Promise<Record<number, string>> {
   if (segments.length === 0) return {};
   const apiKey = Deno.env.get("LOVABLE_API_KEY");
