@@ -277,9 +277,20 @@ interface SellingScore {
     voice: AxisScore;
   };
 }
+interface VoiceFit {
+  total: number; // 0..100
+  axes: {
+    character: AxisScore;     // unmistakably this persona
+    tone: AxisScore;           // tonal consistency across the page
+    signature: AxisScore;      // signature phrases / tics / accent markers
+    entertainment: AxisScore;  // memorable, fun, quotable
+    shareability: AxisScore;   // would a human screenshot this & share?
+  };
+}
 interface ScoreResponse {
   before: SellingScore;
   after: SellingScore;
+  voiceFit?: VoiceFit | null;
   predictedOptimized?: { min: number; expected: number; reasoning: string } | null;
 }
 
