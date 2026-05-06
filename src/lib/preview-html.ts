@@ -3,7 +3,10 @@ export function enhancePreviewHtml(html: string, sourceUrl: string): string {
   const cleaned = html
     .replace(/<base\b[^>]*>/gi, '')
     .replace(/<style\b[^>]*id=["']liketony-[^"']*["'][\s\S]*?<\/style>/gi, '')
-    .replace(/<script\b[^>]*id=["']liketony-[^"']*["'][\s\S]*?<\/script>/gi, '');
+    .replace(/<script\b[^>]*id=["']liketony-[^"']*["'][\s\S]*?<\/script>/gi, '')
+    // srcdoc iframes have a null origin — `crossorigin` on stylesheets/fonts/scripts
+    // makes them fail CORS so the page renders unstyled. Strip the attribute.
+    .replace(/(<(?:link|script|img|source|video|audio)\b[^>]*?)\scrossorigin(\s*=\s*("[^"]*"|'[^']*'|[^\s>]+))?/gi, '$1');
   const injection = `<base href="${safeUrl}"><style id="liketony-runtime-preview-fix">
 html,body{min-width:0!important;max-width:100%!important;overflow-x:hidden!important;}
 .t-records,.t-records_animated,.t-records.t-records_visible{opacity:1!important;}
