@@ -49,36 +49,10 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
   const [changingPersona, setChangingPersona] = useState(false);
   const reqRef = useRef(0);
   const usage = usePersonaUsage();
-  const [paying, setPaying] = useState(false);
   const [optimizing, setOptimizing] = useState(false);
   const [optimized, setOptimized] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState(false);
 
-  // Show confirmation after returning from Stripe checkout
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const sessionId = params.get("paid");
-    if (!sessionId) return;
-    if (sessionId === "cancel") {
-      toast.info("Payment cancelled");
-      window.history.replaceState({}, "", window.location.pathname);
-      return;
-    }
-    (async () => {
-      const { data } = await supabase.functions.invoke("verify-payment", { body: { sessionId } });
-      if (data?.paid) {
-        toast.success(
-          data.email
-            ? `Payment confirmed! We've sent the HTML to ${data.email}.`
-            : "Payment confirmed! Check your email for the download link.",
-          { duration: 8000 },
-        );
-      } else {
-        toast.error("Payment not confirmed");
-      }
-      window.history.replaceState({}, "", window.location.pathname);
-    })();
-  }, []);
   const personaCount = usage[persona.id] ?? 0;
 
   const loading = pending !== null;
