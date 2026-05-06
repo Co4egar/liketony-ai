@@ -1,4 +1,3 @@
-import Stripe from "npm:stripe@14.21.0";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -11,18 +10,10 @@ Deno.serve(async (req) => {
 
   try {
     const url = new URL(req.url);
-    const sessionId = url.searchParams.get("session");
-    if (!sessionId) throw new Error("session is required");
-
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY missing");
-    const stripe = new Stripe(stripeKey, { apiVersion: "2024-06-20" });
-    const session = await stripe.checkout.sessions.retrieve(sessionId);
-    if (session.payment_status !== "paid") {
-      return new Response("Payment not completed", { status: 402, headers: corsHeaders });
+    const publicId = url.searchParams.get("id");
+    if (!publicId || !/^[A-Za-z0-9_-]{1,64}$/.test(publicId)) {
+      return new Response("Invalid id", { status: 400, headers: corsHeaders });
     }
-    const publicId = session.metadata?.publicId;
-    if (!publicId) throw new Error("publicId missing in session metadata");
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -33,7 +24,9 @@ Deno.serve(async (req) => {
       .select("html_rewritten, source_url, persona_id")
       .eq("public_id", publicId)
       .maybeSingle();
-    if (error || !data) throw new Error("Rewrite not found");
+    if (error || !data) {
+      return new Response("Rewrite not found", { status: 404, headers: corsHeaders });
+    }
 
     let host = "site";
     try { host = new URL(data.source_url).hostname.replace(/\W+/g, "-"); } catch { /* noop */ }
