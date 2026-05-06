@@ -360,14 +360,16 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
                 <div className="text-sm text-muted-foreground truncate">{result.url}</div>
               </div>
               <div className="flex items-center gap-2">
-                <div className="rounded-lg border border-border/60 p-0.5 flex bg-card/60">
+                <div className="rounded-xl border border-border/60 p-1 flex bg-card/60">
                   {(["rewritten", "original"] as const).map((v) => (
                     <button
                       key={v}
                       onClick={() => setView(v)}
                       className={cn(
-                        "px-3 py-1 text-xs rounded-md font-medium transition-colors capitalize",
-                        view === v ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
+                        "px-5 py-2 text-sm rounded-lg font-semibold transition-all capitalize shadow-sm",
+                        view === v
+                          ? "bg-primary text-primary-foreground shadow-md ring-1 ring-primary/30"
+                          : "text-muted-foreground hover:text-foreground hover:bg-accent",
                       )}
                     >
                       {v}
