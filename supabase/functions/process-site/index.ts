@@ -64,34 +64,57 @@ async function scrape(url: string): Promise<string> {
   const apiKey = Deno.env.get("FIRECRAWL_API_KEY");
   if (!apiKey) throw new Error("FIRECRAWL_API_KEY is not configured");
 
-  const resp = await fetch(FIRECRAWL_URL, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      url,
-      formats: ["rawHtml", "html"],
-      onlyMainContent: false,
-      waitFor: 1500,
-    }),
-  });
-
-  const data = await resp.json().catch(() => null) as any;
-  if (!resp.ok) {
-    const msg = data?.error || `Firecrawl failed (${resp.status})`;
-    if (resp.status === 402) {
-      throw new Error("Firecrawl out of credits. Top up the connection or try later.");
+  // SPAs (React/Vue/etc.) ship a near-empty shell and hydrate via JS.
+  // We try once with a normal wait; if the rendered body looks empty
+  // (i.e. just `<div id="root"></div>` with no real content), we retry
+  // with a longer wait so the headless browser has time to hydrate.
+  const fetchOnce = async (waitFor: number): Promise<string | undefined> => {
+    const resp = await fetch(FIRECRAWL_URL, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        url,
+        formats: ["rawHtml", "html"],
+        onlyMainContent: false,
+        waitFor,
+      }),
+    });
+    const data = await resp.json().catch(() => null) as any;
+    if (!resp.ok) {
+      const msg = data?.error || `Firecrawl failed (${resp.status})`;
+      if (resp.status === 402) {
+        throw new Error("Firecrawl out of credits. Top up the connection or try later.");
+      }
+      throw new Error(msg);
     }
-    throw new Error(msg);
+    const payload = data?.data ?? data;
+    return payload?.rawHtml ?? payload?.raw_html ?? payload?.html;
+  };
+
+  const looksEmpty = (h: string): boolean => {
+    const bodyMatch = h.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+    const body = bodyMatch ? bodyMatch[1] : h;
+    // Strip scripts/styles/comments to measure real rendered content.
+    const stripped = body
+      .replace(/<script[\s\S]*?<\/script>/gi, "")
+      .replace(/<style[\s\S]*?<\/style>/gi, "")
+      .replace(/<!--([\s\S]*?)-->/g, "")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    return stripped.length < 80;
+  };
+
+  let html = await fetchOnce(1500);
+  if (html && looksEmpty(html)) {
+    // Likely an SPA — give it time to hydrate and retry.
+    const retried = await fetchOnce(8000);
+    if (retried && !looksEmpty(retried)) html = retried;
+    else if (retried && retried.length > html.length) html = retried;
   }
-  // Prefer rawHtml — it preserves the original <head>, <link rel=stylesheet>,
-  // inline <style>, and full DOM. The `html` field is a cleaned/main-content
-  // version that strips styles and breaks the visual layout.
-  const payload = data?.data ?? data;
-  const html: string | undefined =
-    payload?.rawHtml ?? payload?.raw_html ?? payload?.html;
   if (!html) throw new Error("No HTML returned from scrape");
   if (html.length > MAX_HTML_BYTES) {
     throw new Error("Page too large to process (limit ~1.5MB)");
