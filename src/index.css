@@ -4,6 +4,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Hide ElevenLabs convai widget on mobile to avoid blocking inputs */
+@media (max-width: 767px) {
+  elevenlabs-convai { display: none !important; }
+}
+
 /* LikeTony.ai — Claude-inspired warm dark editorial design system. */
 
 @layer base {
