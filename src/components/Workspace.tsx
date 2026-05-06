@@ -1,9 +1,7 @@
 import { useEffect, useMemo, useRef, useState, forwardRef } from "react";
 import {
-  Download,
   ExternalLink,
   Loader2,
-  Share2,
   RefreshCw,
   ChevronLeft,
   Check,
@@ -14,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { PersonaAvatar } from "./PersonaAvatar";
 import { DomainBar } from "./DomainBar";
 import { PersonaCatalog } from "./PersonaCatalog";
+import { DownloadEmailGate } from "./DownloadEmailGate";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
