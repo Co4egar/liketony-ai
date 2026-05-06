@@ -284,7 +284,11 @@ export function prepareStaticPreviewHtml(html: string, sourceUrl: string): strin
     // <noscript> content (e.g. "Please upgrade your browser") would render
     // because scripts are disabled in the preview iframe. Drop it.
     .replace(/<noscript\b[^>]*>[\s\S]*?<\/noscript>/gi, "")
-    .replace(/\son[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "");
+    .replace(/\son[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "")
+    // srcdoc iframes have a null origin. Stylesheets/fonts/scripts loaded
+    // with `crossorigin` then fail CORS and the page renders unstyled.
+    // Strip the attribute so the browser fetches them as no-cors requests.
+    .replace(/(<(?:link|script|img|source|video|audio)\b[^>]*?)\scrossorigin(\s*=\s*("[^"]*"|'[^']*'|[^\s>]+))?/gi, "$1");
 
   out = out.replace(
     /<img\b([^>]*?)\bdata-original\s*=\s*("([^"]*)"|'([^']*)')([^>]*)>/gi,
