@@ -144,45 +144,6 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
     }
   };
 
-  const handleDownload = async () => {
-    if (!result) return;
-    setPaying(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: {
-          publicId: result.publicId,
-          sourceUrl: result.url,
-          personaName: persona.name,
-        },
-      });
-      if (error) throw error;
-      if (!data?.url) throw new Error("No checkout URL");
-      const win = window.open(data.url, "_blank", "noopener,noreferrer");
-      if (!win) {
-        // Popup blocked — break out of iframe to top-level navigation
-        try {
-          window.top!.location.href = data.url;
-        } catch {
-          window.location.href = data.url;
-        }
-      }
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to start checkout");
-      setPaying(false);
-    }
-  };
-
-  const handleShare = async () => {
-    if (!result) return;
-    const link = `${window.location.origin}/r/${result.publicId}`;
-    try {
-      await navigator.clipboard.writeText(link);
-      toast.success("Share link copied to clipboard");
-    } catch {
-      toast.message(link);
-    }
-  };
-
   const previewSrc = useMemo(() => {
     if (!result) return "";
     const html = view === "rewritten"
