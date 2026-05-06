@@ -9,8 +9,8 @@ export default function Download() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const session = params.get("session");
-    if (!session) {
+    const id = params.get("id") || params.get("session"); // legacy fallback
+    if (!id) {
       setStatus("error");
       setMessage("This link is invalid");
       return;
@@ -18,7 +18,7 @@ export default function Download() {
 
     (async () => {
       try {
-        const resp = await fetch(`${FUNCTIONS_URL}?session=${encodeURIComponent(session)}`);
+        const resp = await fetch(`${FUNCTIONS_URL}?id=${encodeURIComponent(id)}`);
         if (!resp.ok) {
           const text = await resp.text();
           throw new Error(text || `Error ${resp.status}`);

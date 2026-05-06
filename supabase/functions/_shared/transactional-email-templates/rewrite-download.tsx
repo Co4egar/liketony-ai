@@ -34,8 +34,8 @@ export function RewriteDownloadEmail({
             Your rewrite is ready 🎉
           </Heading>
           <Text style={{ fontSize: 15, lineHeight: 1.6, color: '#c7c7cf', marginTop: 14 }}>
-            Thanks for your purchase! <strong style={{ color: '#fff' }}>{personaName}</strong> just rewrote{' '}
-            <strong style={{ color: '#fff' }}>{sourceUrl}</strong> in their voice.
+            <strong style={{ color: '#fff' }}>{personaName}</strong> just rewrote{' '}
+            <strong style={{ color: '#fff' }}>{sourceUrl}</strong> in their voice. Your HTML is ready to download.
           </Text>
           <Section style={{ textAlign: 'center', margin: '28px 0' }}>
             <Button

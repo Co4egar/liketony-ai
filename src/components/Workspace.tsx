@@ -1,9 +1,7 @@
 import { useEffect, useMemo, useRef, useState, forwardRef } from "react";
 import {
-  Download,
   ExternalLink,
   Loader2,
-  Share2,
   RefreshCw,
   ChevronLeft,
   Check,
@@ -14,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { PersonaAvatar } from "./PersonaAvatar";
 import { DomainBar } from "./DomainBar";
 import { PersonaCatalog } from "./PersonaCatalog";
+import { DownloadEmailGate } from "./DownloadEmailGate";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -50,36 +49,10 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
   const [changingPersona, setChangingPersona] = useState(false);
   const reqRef = useRef(0);
   const usage = usePersonaUsage();
-  const [paying, setPaying] = useState(false);
   const [optimizing, setOptimizing] = useState(false);
   const [optimized, setOptimized] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState(false);
 
-  // Show confirmation after returning from Stripe checkout
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const sessionId = params.get("paid");
-    if (!sessionId) return;
-    if (sessionId === "cancel") {
-      toast.info("Payment cancelled");
-      window.history.replaceState({}, "", window.location.pathname);
-      return;
-    }
-    (async () => {
-      const { data } = await supabase.functions.invoke("verify-payment", { body: { sessionId } });
-      if (data?.paid) {
-        toast.success(
-          data.email
-            ? `Payment confirmed! We've sent the HTML to ${data.email}.`
-            : "Payment confirmed! Check your email for the download link.",
-          { duration: 8000 },
-        );
-      } else {
-        toast.error("Payment not confirmed");
-      }
-      window.history.replaceState({}, "", window.location.pathname);
-    })();
-  }, []);
   const personaCount = usage[persona.id] ?? 0;
 
   const loading = pending !== null;
@@ -168,45 +141,6 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
       toast.error(e instanceof Error ? e.message : "Optimization failed");
     } finally {
       setOptimizing(false);
-    }
-  };
-
-  const handleDownload = async () => {
-    if (!result) return;
-    setPaying(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: {
-          publicId: result.publicId,
-          sourceUrl: result.url,
-          personaName: persona.name,
-        },
-      });
-      if (error) throw error;
-      if (!data?.url) throw new Error("No checkout URL");
-      const win = window.open(data.url, "_blank", "noopener,noreferrer");
-      if (!win) {
-        // Popup blocked — break out of iframe to top-level navigation
-        try {
-          window.top!.location.href = data.url;
-        } catch {
-          window.location.href = data.url;
-        }
-      }
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to start checkout");
-      setPaying(false);
-    }
-  };
-
-  const handleShare = async () => {
-    if (!result) return;
-    const link = `${window.location.origin}/r/${result.publicId}`;
-    try {
-      await navigator.clipboard.writeText(link);
-      toast.success("Share link copied to clipboard");
-    } catch {
-      toast.message(link);
     }
   };
 
@@ -302,11 +236,7 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
               );
             })()}
             {result && !changingPersona && (
-              <Button onClick={handleDownload} disabled={paying} className="w-full justify-start gap-2">
-                {paying ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                Download HTML
-                <span className="ml-auto text-[10px] uppercase tracking-wider opacity-80">$19.99</span>
-              </Button>
+              <DownloadEmailGate publicId={result.publicId} />
             )}
             <div className="rounded-xl border border-border/60 bg-card/60 p-3 flex items-center gap-3">
               <PersonaAvatar persona={persona} />
@@ -368,18 +298,12 @@ export const Workspace = forwardRef<HTMLDivElement, Props>(function Workspace(
         </div>
       </aside>
 
-      {/* Mobile sticky Download CTA — keeps the buy button visible while the sidebar scrolls */}
+      {/* Mobile sticky Download CTA */}
       {result && !changingPersona && (
         <div className="sm:hidden fixed bottom-0 inset-x-0 z-40 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 bg-gradient-to-t from-background via-background/95 to-background/0 pointer-events-none">
-          <Button
-            onClick={handleDownload}
-            disabled={paying}
-            className="w-full pointer-events-auto shadow-xl shadow-primary/20 gap-2"
-          >
-            {paying ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-            Download HTML
-            <span className="ml-auto text-[10px] uppercase tracking-wider opacity-80">$19.99</span>
-          </Button>
+          <div className="pointer-events-auto">
+            <DownloadEmailGate publicId={result.publicId} />
+          </div>
         </div>
       )}
 

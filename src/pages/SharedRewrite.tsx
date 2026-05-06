@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Loader2, Download, ArrowLeft, ExternalLink } from "lucide-react";
+import { Loader2, ArrowLeft, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { enhancePreviewHtml } from "@/lib/preview-html";
-import { toast } from "sonner";
 import { SellingScoreCard } from "@/components/SellingScoreCard";
+import { DownloadEmailGate } from "@/components/DownloadEmailGate";
 import type { SellingScoreBundle } from "@/types/rewrite";
 
 interface Rewrite {
@@ -23,7 +23,6 @@ const SharedRewrite = () => {
   const [data, setData] = useState<Rewrite | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [view, setView] = useState<"rewritten" | "original">("rewritten");
-  const [paying, setPaying] = useState(false);
 
   useEffect(() => {
     if (!publicId) return;
@@ -40,32 +39,6 @@ const SharedRewrite = () => {
       document.title = `${data.persona_name} rewrites ${data.source_url} — LikeTony.ai`;
     })();
   }, [publicId]);
-
-  // Show confirmation after returning from Stripe checkout
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const sessionId = params.get("paid");
-    if (!sessionId) return;
-    if (sessionId === "cancel") {
-      toast.info("Payment cancelled");
-      window.history.replaceState({}, "", window.location.pathname);
-      return;
-    }
-    (async () => {
-      const { data: vp } = await supabase.functions.invoke("verify-payment", { body: { sessionId } });
-      if (vp?.paid) {
-        toast.success(
-          vp.email
-            ? `Payment confirmed! We've sent the HTML to ${vp.email}.`
-            : "Payment confirmed! Check your email for the download link.",
-          { duration: 8000 },
-        );
-      } else {
-        toast.error("Payment not confirmed");
-      }
-      window.history.replaceState({}, "", window.location.pathname);
-    })();
-  }, []);
 
   if (error) {
     return (
@@ -88,26 +61,6 @@ const SharedRewrite = () => {
   const previewHtml = view === "rewritten"
     ? enhancePreviewHtml(data.html_rewritten, data.source_url)
     : enhancePreviewHtml(data.html_original, data.source_url);
-
-  const handleDownload = async () => {
-    if (!publicId) return;
-    setPaying(true);
-    try {
-      const { data: ck, error } = await supabase.functions.invoke("create-checkout", {
-        body: {
-          publicId,
-          sourceUrl: data.source_url,
-          personaName: data.persona_name,
-        },
-      });
-      if (error) throw error;
-      if (!ck?.url) throw new Error("No checkout URL");
-      window.location.href = ck.url;
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to start checkout");
-      setPaying(false);
-    }
-  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -136,10 +89,9 @@ const SharedRewrite = () => {
               </button>
             ))}
           </div>
-          <Button size="sm" variant="secondary" onClick={handleDownload} disabled={paying}>
-            {paying ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Download className="w-4 h-4 mr-1.5" />}
-            Download HTML <span className="ml-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">$19.99</span>
-          </Button>
+          <div className="w-[280px] max-w-[80vw]">
+            {publicId && <DownloadEmailGate publicId={publicId} />}
+          </div>
           <a href={data.source_url} target="_blank" rel="noopener noreferrer">
             <Button size="sm" variant="ghost"><ExternalLink className="w-4 h-4" /></Button>
           </a>

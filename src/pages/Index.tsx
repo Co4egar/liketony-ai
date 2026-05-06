@@ -48,7 +48,7 @@ const Index = () => {
       "Drop your URL, pick a voice (Hormozi, Jobs, Hemingway and more), and rewrite your landing page in 60 seconds.",
     offers: {
       "@type": "Offer",
-      price: "19",
+      price: "0",
       priceCurrency: "USD",
     },
   };
